@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>股票量化分析APP - 产品设计方案</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card-bg: #1a1d27;
+    --border: #2a2d37;
+    --text: #e8e8ed;
+    --text-secondary: #8b8fa3;
+    --red: #ef4444;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --accent: #f59e0b;
+    --up: #ef4444;
+    --down: #22c55e;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    line-height: 1.7;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 40%, #1a1d27 100%);
+    padding: 60px 24px 48px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero .badge-row { margin-bottom: 16px; }
+  .hero .tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin: 0 4px;
+  }
+  .tag-local { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .tag-offline { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+  .tag-personal{ background: rgba(245,158,11,0.15); color: var(--accent); border: 1px solid rgba(245,158,11,0.3); }
+  .hero h1 {
+    font-size: 36px; font-weight: 700;
+    background: linear-gradient(135deg, #22c55e, #3b82f6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero .subtitle {
+    font-size: 18px; color: var(--text-secondary); letter-spacing: 2px;
+  }
+  .hero .principles {
+    display: flex; justify-content: center; gap: 32px; margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .hero .principle {
+    text-align: center; font-size: 13px;
+  }
+  .hero .principle .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+  .hero .principle .label { color: var(--text-secondary); }
+  .hero .version { margin-top: 20px; font-size: 13px; color: var(--text-secondary); opacity: 0.6; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+  .section:last-child { border-bottom: none; }
+  .section-title {
+    font-size: 26px; font-weight: 700; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .icon { font-size: 28px; }
+  .section-desc { color: var(--text-secondary); margin-bottom: 32px; font-size: 15px; }
+
+  /* Cards */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .overview-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .overview-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .overview-card h3 { font-size: 18px; margin-bottom: 6px; }
+  .overview-card .en { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 14px; }
+  .overview-card ul { list-style: none; padding: 0; }
+  .overview-card ul li { padding: 5px 0; color: var(--text-secondary); font-size: 14px; }
+  .overview-card ul li::before { content: "▸ "; color: var(--accent); }
+
+  /* Diff card */
+  .diff-card {
+    background: var(--card-bg); border: 1px solid rgba(34,197,94,0.3);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+  }
+  .diff-card h3 { color: var(--green); font-size: 18px; margin-bottom: 16px; }
+  .diff-card table { width: 100%; font-size: 13px; }
+  .diff-card td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .diff-card td:first-child { color: var(--red); width: 30%; text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.4); }
+  .diff-card td:last-child { color: var(--green); }
+
+  /* Tables */
+  .feature-table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+  }
+  .feature-table th, .feature-table td {
+    padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .feature-table th {
+    color: var(--accent); font-weight: 600; font-size: 13px;
+    background: #1a1d27; position: sticky; top: 0;
+  }
+  .feature-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 500;
+  }
+  .badge-p0 { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-p1 { background: rgba(245,158,11,0.15); color: var(--accent); }
+  .badge-p2 { background: rgba(59,130,246,0.15); color: var(--blue); }
+
+  /* Architecture */
+  .arch-diagram {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px; overflow-x: auto;
+  }
+  .arch-layers { display: flex; flex-direction: column; gap: 12px; }
+  .arch-layer { display: flex; align-items: center; gap: 12px; }
+  .arch-layer-label {
+    width: 120px; font-size: 12px; font-weight: 700;
+    color: var(--accent); text-align: right; flex-shrink: 0;
+  }
+  .arch-layer-boxes { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .arch-box {
+    background: #12141c; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 16px; font-size: 12px; white-space: nowrap;
+  }
+
+  /* Mockup */
+  .mockup-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .mockup-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .mockup-card:hover { transform: translateY(-3px); }
+  .mockup-card .label {
+    padding: 14px 18px 8px; font-weight: 600; font-size: 15px;
+  }
+  .mockup-card .label small { color: var(--text-secondary); font-weight: 400; margin-left: 4px; }
+  .mockup-card .preview { padding: 0 18px 18px; }
+  .mockup-screen {
+    width: 100%; aspect-ratio: 9/19;
+    background: #0a0b0f; border: 2px solid var(--border);
+    border-radius: 16px; padding: 12px;
+    display: flex; flex-direction: column; gap: 7px;
+    font-size: 9px; overflow: hidden;
+  }
+  .screen-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8px; color: var(--text-secondary); padding-bottom: 2px;
+  }
+  .screen-search {
+    background: #1e202a; border-radius: 8px; padding: 6px 10px;
+    color: var(--text-secondary); font-size: 8px; text-align: center;
+  }
+  .screen-indices { display: flex; gap: 5px; overflow: hidden; }
+  .index-chip {
+    flex: 1; background: #1e202a; border-radius: 6px;
+    padding: 5px; text-align: center; font-size: 7px;
+  }
+  .index-chip .name { color: var(--text-secondary); font-size: 6px; }
+  .index-chip .val { font-weight: 700; font-size: 9px; margin: 1px 0; }
+  .index-chip .change { font-size: 7px; }
+  .screen-chart-area {
+    flex: 1; background: #12141c; border-radius: 8px;
+    position: relative; overflow: hidden;
+  }
+  .screen-tabs { display: flex; gap: 3px; }
+  .screen-tab {
+    padding: 2px 7px; border-radius: 4px; font-size: 7px;
+    background: #1e202a; color: var(--text-secondary);
+  }
+  .screen-tab.active { background: var(--accent); color: #000; font-weight: 600; }
+  .screen-list {
+    flex: 1; display: flex; flex-direction: column; gap: 3px; overflow: hidden;
+  }
+  .list-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 6px; background: #12141c; border-radius: 4px; font-size: 8px;
+  }
+  .bottom-bar {
+    display: flex; gap: 4px; justify-content: space-around;
+    padding-top: 5px; border-top: 1px solid var(--border);
+    font-size: 7px; color: var(--text-secondary);
+  }
+  .bottom-bar .bb-item { text-align: center; }
+  .bottom-bar .bb-item.active { color: var(--accent); }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+
+  /* Roadmap */
+  .roadmap { position: relative; padding-left: 28px; }
+  .roadmap::before {
+    content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .roadmap-item { position: relative; padding-bottom: 32px; }
+  .roadmap-item::before {
+    content: ''; position: absolute; left: -22px; top: 4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg);
+  }
+  .roadmap-item h4 { font-size: 16px; margin-bottom: 4px; }
+  .roadmap-item p { color: var(--text-secondary); font-size: 13px; }
+  .roadmap-item .time { font-size: 12px; color: var(--accent); margin-bottom: 4px; }
+
+  /* Tech */
+  .tech-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;
+  }
+  .tech-item {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; text-align: center;
+  }
+  .tech-item .icon { font-size: 32px; margin-bottom: 8px; }
+  .tech-item h4 { font-size: 15px; margin-bottom: 4px; }
+  .tech-item p { font-size: 12px; color: var(--text-secondary); }
+
+  /* TOC */
+  .toc {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px 28px; margin-bottom: 32px;
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+  }
+  .toc a {
+    color: var(--text-secondary); text-decoration: none; font-size: 14px;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--accent); }
+  .toc a::before { content: "§ "; color: var(--accent); font-size: 12px; }
+
+  .data-flow {
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap; justify-content: center; padding: 20px;
+  }
+  .data-flow-node {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px; text-align: center;
+    font-size: 13px; white-space: nowrap;
+  }
+  .data-flow-arrow {
+    color: var(--accent); font-size: 20px; font-weight: 700;
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 26px; }
+    .section-title { font-size: 22px; }
+    .overview-grid { grid-template-columns: 1fr; }
+    .mockup-group { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .mockup-group { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======== HERO ======== -->
+<div class="hero">
+  <div class="badge-row">
+    <span class="tag tag-local">📱 纯本地计算</span>
+    <span class="tag tag-offline">🔌 可配置数据源</span>
+    <span class="tag tag-personal">👤 个人分析工具</span>
+  </div>
+  <h1>📈 个人量化选股分析工具</h1>
+  <div class="subtitle">Personal Quantitative Stock Analyzer</div>
+  <div class="principles">
+    <div class="principle">
+      <span class="icon">📱</span>
+      <span class="label">纯手机本地计算</span>
+    </div>
+    <div class="principle">
+      <span class="icon">🗄️</span>
+      <span class="label">SQLite 本地存储</span>
+    </div>
+    <div class="principle">
+      <span class="icon">🔍</span>
+      <span class="label">仅做分析选股</span>
+    </div>
+    <div class="principle">
+      <span class="icon">⚙️</span>
+      <span class="label">数据源可配置</span>
+    </div>
+    <div class="principle">
+      <span class="icon">📊</span>
+      <span class="label">分析范围可定制</span>
+    </div>
+  </div>
+  <div class="version">Version 2.0 · 2026.06.10 · 产品设计阶段 · 纯本地版</div>
+</div>
+
+<div class="container">
+
+<!-- ======== TOC ======== -->
+<div style="padding-top:32px;">
+  <div class="toc">
+    <a href="#s1">项目定位</a>
+    <a href="#s2">设计原则修正</a>
+    <a href="#s3">参考分析</a>
+    <a href="#s4">数据架构</a>
+    <a href="#s5">功能架构</a>
+    <a href="#s6">页面原型</a>
+    <a href="#s7">功能详情</a>
+    <a href="#s8">量化分析引擎</a>
+    <a href="#s9">数据库设计</a>
+    <a href="#s10">技术选型</a>
+    <a href="#s11">版本路线</a>
+  </div>
+</div>
+
+<!-- ======== 1. 项目定位 ======== -->
+<div class="section" id="s1">
+  <div class="section-title"><span class="icon">🎯</span> 一、项目定位</div>
+  <div class="section-desc">一款运行在手机上的纯本地量化分析工具，不连接交易、不依赖服务器</div>
+
+  <div class="overview-grid">
+    <div class="overview-card">
+      <h3>产品定义</h3>
+      <span class="en">Product Definition</span>
+      <ul>
+        <li>面向个人投资者的<strong>本地化选股分析工具</strong></li>
+        <li>所有计算和存储均在手机本地完成</li>
+        <li>专注于数据分析与选股，<strong>不做交易执行</strong></li>
+        <li>数据来源可配置，种子源为 Tushare</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>目标用户</h3>
+      <span class="en">Target Users</span>
+      <ul>
+        <li>有 A 股投资经验的个人投资者</li>
+        <li>希望用数据辅助选股决策，而非盲从消息</li>
+        <li>偏好自主掌控数据，对隐私敏感</li>
+        <li>不需要复杂服务器部署的技术用户</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>不做什么</h3>
+      <span class="en">Out of Scope</span>
+      <ul>
+        <li>❌ 不接入券商交易接口</li>
+        <li>❌ 不提供投资建议或买卖推荐</li>
+        <li>❌ 不搭建后端服务器</li>
+        <li>❌ 不处理全市场实时行情</li>
+        <li>❌ 不做社交/社区功能</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ======== 2. 设计原则修正 ======== -->
+<div class="section" id="s2">
+  <div class="section-title"><span class="icon">🔄</span> 二、V1→V2 关键设计修正</div>
+  <div class="section-desc">基于用户反馈，从「云端交易平台」彻底转为「本地分析工具」</div>
+
+  <div class="diff-card">
+    <h3>📋 架构变更对照表</h3>
+    <table>
+      <tr><td>❌ 交易执行：券商 API 对接、下单、持仓同步</td><td>✅ 纯分析选股，不涉及任何交易操作</td></tr>
+      <tr><td>❌ 自建后端服务器：Go 微服务、API 网关、K8s 部署</td><td>✅ 零服务器，全部逻辑在手机本地运行</td></tr>
+      <tr><td>❌ 全市场实时行情：5000+ 标的实时推送</td><td>✅ 用户自定义股票范围，按需拉取数据</td></tr>
+      <tr><td>❌ 云端存储：PostgreSQL / Redis / TimescaleDB</td><td>✅ SQLite 本地数据库，数据完全在用户手中</td></tr>
+      <tr><td>❌ 硬编码数据源</td><td>✅ 数据源可配置，种子源默认 Tushare</td></tr>
+      <tr><td>❌ 固定行业分类</td><td>✅ 行业划分为种子，用户可自定义分类体系</td></tr>
+      <tr><td>❌ 用户系统：注册登录、VIP 订阅、云同步</td><td>✅ 纯本地单用户，无需登录，数据自己管理</td></tr>
+      <tr><td>❌ 服务端策略引擎：事件驱动架构</td><td>✅ 手机端本地计算引擎，分析的股票数量用户可设</td></tr>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+    <div class="overview-card">
+      <h3>🏠 数据主权归用户</h3>
+      <ul>
+        <li>所有行情数据存储在手机 SQLite</li>
+        <li>用户自主决定要分析哪些股票</li>
+        <li>数据导入/导出/删除完全可控</li>
+        <li>无任何数据回传或上报</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>⚡ 手机端计算能力</h3>
+      <ul>
+        <li>现代手机 CPU 足以处理百只股票的量化计算</li>
+        <li>分析股票数量用户可自定义（默认 50 只）</li>
+        <li>批量计算在后台线程执行，不阻塞 UI</li>
+        <li>结果即时呈现，无需网络等待</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>🔌 数据源灵活切换</h3>
+      <ul>
+        <li>默认种子：Tushare Pro API</li>
+        <li>数据源接口抽象，可适配其他源（AKShare 等）</li>
+        <li>支持手动 CSV/Excel 导入</li>
+        <li>每日定时自动拉取更新</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ======== 3. 参考分析 ======== -->
+<div class="section" id="s3">
+  <div class="section-title"><span class="icon">🔍</span> 三、参考截图分析与功能映射</div>
+  <div class="section-desc">基于 docs/ 5 张参考图，重新映射到本地分析工具的功能</div>
+
+  <table class="feature-table">
+    <thead>
+      <tr>
+        <th>参考图</th>
+        <th>原始功能</th>
+        <th>我们的映射</th>
+        <th>本地化实现方式</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>420.JPG</strong></td>
+        <td>行情首页：大盘指数、板块涨跌、搜索</td>
+        <td><strong>市场概览仪表盘</strong></td>
+        <td>从 SQLite 读取已拉取的指数+板块数据，本地计算涨跌排名，搜索仅限已导入股票池</td>
+      </tr>
+      <tr>
+        <td><strong>422.JPG</strong></td>
+        <td>个股详情：K线图、技术指标、交易入口</td>
+        <td><strong>个股深度分析</strong>（去掉交易入口）</td>
+        <td>本地 SQLite 读取历史 K 线 → Canvas 渲染 → 本地计算技术指标并叠加显示</td>
+      </tr>
+      <tr>
+        <td><strong>IMG_8670.JPG</strong></td>
+        <td>选股策略、条件筛选、结果列表</td>
+        <td><strong>多维度条件选股</strong></td>
+        <td>手机端遍历股票池，逐只匹配条件，结果实时排序展示。策略 DSL 存 SQLite</td>
+      </tr>
+      <tr>
+        <td><strong>IMG_8671.JPG</strong></td>
+        <td>持仓管理、资产概览、盈亏分析</td>
+        <td><strong>模拟持仓跟踪</strong>（非实盘）</td>
+        <td>用户手动录入持仓（或 CSV 导入），本地计算盈亏和收益曲线。仅做分析参考</td>
+      </tr>
+      <tr>
+        <td><strong>IMG_8672.JPG</strong></td>
+        <td>条件预警、信号通知</td>
+        <td><strong>选股结果通知</strong>（本地通知）</td>
+        <td>定时后台任务拉取数据 → 运行策略 → 匹配结果通过本地通知提醒。无推送服务器</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ======== 4. 数据架构 ======== -->
+<div class="section" id="s4">
+  <div class="section-title"><span class="icon">🔄</span> 四、数据流转架构</div>
+  <div class="section-desc">从外部数据源到手机本地分析引擎的完整数据链路</div>
+
+  <div class="arch-diagram" style="margin-bottom:24px;">
+    <div class="data-flow">
+      <div class="data-flow-node">
+        <div style="font-size:20px;">☁️</div>
+        <strong>Tushare Pro</strong>
+        <div style="font-size:11px;color:var(--text-secondary);">(默认种子源)</div>
+      </div>
+      <div class="data-flow-arrow">→</div>
+      <div class="data-flow-node">
+        <div style="font-size:20px;">🔌</div>
+        <strong>数据适配层</strong>
+        <div style="font-size:11px;color:var(--text-secondary);">可配置切换</div>
+      </div>
+      <div class="data-flow-arrow">→</div>
+      <div class="data-flow-node">
+        <div style="font-size:20px;">🗄️</div>
+        <strong>SQLite</strong>
+        <div style="font-size:11px;color:var(--text-secondary);">手机本地</div>
+      </div>
+      <div class="data-flow-arrow">→</div>
+      <div class="data-flow-node">
+        <div style="font-size:20px;">🧠</div>
+        <strong>本地计算引擎</strong>
+        <div style="font-size:11px;color:var(--text-secondary);">技术指标 + 策略</div>
+      </div>
+      <div class="data-flow-arrow">→</div>
+      <div class="data-flow-node">
+        <div style="font-size:20px;">📊</div>
+        <strong>结果展示</strong>
+        <div style="font-size:11px;color:var(--text-secondary);">图表 + 列表</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+    <div class="overview-card">
+      <h3>🔌 数据源配置</h3>
+      <span class="en">Data Source Configuration</span>
+      <ul>
+        <li><strong>种子源</strong>：Tushare Pro（用户填入自己的 Token）</li>
+        <li><strong>可替换</strong>：实现 DataSource 接口即可接入其他源</li>
+        <li><strong>K 线周期可配</strong>：日线（必选）、分钟线可选（5/15/30/60 分钟），周/月线本地合成</li>
+        <li><strong>手动导入</strong>：支持 CSV / Excel 文件导入历史数据</li>
+        <li><strong>拉取控制</strong>：用户设定每日自动拉取时间、频率限制</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>📊 数据范围（多周期可配）</h3>
+      <span class="en">Data Scope — Multi-Period</span>
+      <ul>
+        <li><strong>股票池</strong>：用户自选股票列表（如 50-200 只）</li>
+        <li><strong>日线数据</strong>：每只股票的历史日线（默认 5 年），<strong>必选</strong></li>
+        <li><strong>周线/月线</strong>：可由日线本地合成，也可直接拉取</li>
+        <li><strong>分钟线</strong>：可选配置（5/15/30/60分钟），按需拉取</li>
+        <li><strong>数据周期完全由用户控制</strong>：在设置中选择需要拉取的周期类型</li>
+        <li><strong>财务数据</strong>：季报/年报关键指标（可选）</li>
+        <li><strong>指数数据</strong>：主要大盘指数历史行情</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>🗂️ 分类体系</h3>
+      <span class="en">Category System</span>
+      <ul>
+        <li><strong>种子分类</strong>：基于行业划分（申万/中信行业）</li>
+        <li><strong>用户自定义</strong>：可创建个人分类标签</li>
+        <li><strong>多标签</strong>：一只股票可属于多个分类</li>
+        <li><strong>动态分组</strong>：基于规则自动归类（如 "PE&lt;20"）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ======== 5. 功能架构 ======== -->
+<div class="section" id="s5">
+  <div class="section-title"><span class="icon">🏗️</span> 五、功能架构总览</div>
+  <div class="section-desc">纯本地 APP 的功能模块划分</div>
+
+  <div class="arch-diagram">
+    <div class="arch-layers">
+      <div class="arch-layer">
+        <div class="arch-layer-label">📊 行情看盘</div>
+        <div class="arch-layer-boxes">
+          <div class="arch-box">大盘概览</div>
+          <div class="arch-box">板块热力</div>
+          <div class="arch-box">个股K线</div>
+          <div class="arch-box">技术指标</div>
+          <div class="arch-box">自选管理</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">🧠 量化选股</div>
+        <div class="arch-layer-boxes">
+          <div class="arch-box">策略编辑器</div>
+          <div class="arch-box">条件扫描</div>
+          <div class="arch-box">本地回测</div>
+          <div class="arch-box">结果排序</div>
+          <div class="arch-box">信号标记</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">📋 模拟跟踪</div>
+        <div class="arch-layer-boxes">
+          <div class="arch-box">模拟持仓</div>
+          <div class="arch-box">盈亏计算</div>
+          <div class="arch-box">收益曲线</div>
+          <div class="arch-box">交易记录</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">🔔 本地提醒</div>
+        <div class="arch-layer-boxes">
+          <div class="arch-box">条件触发</div>
+          <div class="arch-box">定时扫描</div>
+          <div class="arch-box">本地通知</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">⚙️ 系统设置</div>
+        <div class="arch-layer-boxes">
+          <div class="arch-box">数据源配置</div>
+          <div class="arch-box">Tushare Token</div>
+          <div class="arch-box">股票池管理</div>
+          <div class="arch-box">分类自定义</div>
+          <div class="arch-box">数据导入导出</div>
+          <div class="arch-box">分析范围设置</div>
+        </div>
+      </div>
+      <div class="arch-layer">
+        <div class="arch-layer-label">🗄️ 本地存储</div>
+        <div class="arch-layer-boxes">
+          <div class="arch-box">SQLite 数据库</div>
+          <div class="arch-box">文件系统（导出）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== 6. 页面原型 ======== -->
+<div class="section" id="s6">
+  <div class="section-title"><span class="icon">📱</span> 六、核心页面原型</div>
+  <div class="section-desc">5 大核心页面 — 深色主题，信息高密度，专注分析</div>
+
+  <div class="mockup-group">
+
+    <!-- Page 1 -->
+    <div class="mockup-card">
+      <div class="label">📊 市场仪表盘 <small>Dashboard</small></div>
+      <div class="preview">
+        <div class="mockup-screen">
+          <div class="screen-header"><span>📅 2026-06-10</span><span>🔄 已更新</span></div>
+          <div class="screen-search">🔍 搜索已导入股票…</div>
+          <div class="screen-indices">
+            <div class="index-chip">
+              <div class="name">上证指数</div><div class="val down">3280.46</div><div class="change down">-2.02%</div>
+            </div>
+            <div class="index-chip">
+              <div class="name">深证成指</div><div class="val up">10936.83</div><div class="change up">+0.42%</div>
+            </div>
+            <div class="index-chip">
+              <div class="name">创业板指</div><div class="val up">2305.28</div><div class="change up">+0.58%</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:7px;color:var(--text-secondary);">
+            <span>📈 股票池: <strong style="color:var(--text);">120只</strong></span>
+            <span>✅ 已更新: <strong style="color:var(--green);">120</strong></span>
+          </div>
+          <div class="screen-list">
+            <div style="font-size:7px;font-weight:600;color:var(--text-secondary);">📊 股票池涨跌分布</div>
+            <div style="display:flex;gap:3px;align-items:flex-end;height:40px;padding:4px 0;">
+              <div style="flex:1;height:30%;background:var(--green);border-radius:2px 2px 0 0;"></div>
+              <div style="flex:1;height:50%;background:var(--green);border-radius:2px 2px 0 0;"></div>
+              <div style="flex:1;height:25%;background:var(--red);border-radius:2px 2px 0 0;"></div>
+              <div style="flex:1;height:70%;background:var(--green);border-radius:2px 2px 0 0;"></div>
+              <div style="flex:1;height:40%;background:var(--red);border-radius:2px 2px 0 0;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:7px;">
+              <span class="up">上涨 78</span><span class="down">下跌 38</span><span style="color:var(--text-secondary)">平 4</span>
+            </div>
+            <div style="font-size:7px;font-weight:600;color:var(--text-secondary);margin-top:2px;">🏷️ 分类概览</div>
+            <div class="list-row"><span>🔵 科技 (32只)</span><span class="up">+2.1%</span></div>
+            <div class="list-row"><span>🟢 消费 (28只)</span><span class="down">-0.8%</span></div>
+            <div class="list-row"><span>🟡 金融 (18只)</span><span class="up">+1.2%</span></div>
+          </div>
+          <div class="bottom-bar">
+            <div class="bb-item active">🏠 概览</div>
+            <div class="bb-item">🧠 选股</div>
+            <div class="bb-item">📋 自选</div>
+            <div class="bb-item">📊 跟踪</div>
+            <div class="bb-item">⚙️ 设置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 2: 个股深度分析 -->
+    <div class="mockup-card">
+      <div class="label">📈 个股分析 <small>Stock Analysis</small></div>
+      <div class="preview">
+        <div class="mockup-screen">
+          <div class="screen-header"><span>← 蓝英装备</span><span>⭐</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:16px;font-weight:700;">40.26</span>
+            <span class="up" style="font-size:10px;">+2.18 +5.72%</span>
+          </div>
+          <div style="font-size:7px;color:var(--text-secondary);">今开 38.20 | 高 41.50 | 低 37.88 | 量 128万手</div>
+          <div class="screen-tabs">
+            <div class="screen-tab active">日K</div>
+            <div class="screen-tab">周K</div>
+            <div class="screen-tab">月K</div>
+            <div class="screen-tab">60分</div>
+          </div>
+          <div class="screen-chart-area" style="flex:2.5;min-height:80px;">
+            <svg viewBox="0 0 200 90" style="width:100%;height:100%;">
+              <polyline points="0,60 15,45 30,38 45,25 60,28 75,15 90,20 105,12 120,8 135,10 150,5 165,7 180,3 195,5" fill="none" stroke="#ef4444" stroke-width="1.5"/>
+              <line x1="0" y1="30" x2="200" y2="30" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="4,4" opacity="0.4"/>
+            </svg>
+          </div>
+          <div class="screen-tabs">
+            <div class="screen-tab">MACD</div>
+            <div class="screen-tab active">KDJ</div>
+            <div class="screen-tab">RSI</div>
+            <div class="screen-tab">BOLL</div>
+          </div>
+          <div class="screen-chart-area" style="min-height:35px;background:#12141c;border-radius:6px;padding:4px;display:flex;align-items:flex-end;">
+            <div style="display:flex;width:100%;height:100%;align-items:flex-end;gap:1px;">
+              <div style="flex:1;background:var(--red);height:30%;opacity:0.7;"></div>
+              <div style="flex:1;background:var(--green);height:50%;opacity:0.7;"></div>
+              <div style="flex:1;background:var(--red);height:25%;opacity:0.7;"></div>
+              <div style="flex:1;background:var(--green);height:65%;opacity:0.7;"></div>
+              <div style="flex:1;background:var(--red);height:20%;opacity:0.7;"></div>
+              <div style="flex:1;background:var(--green);height:55%;opacity:0.7;"></div>
+              <div style="flex:1;background:var(--red);height:18%;opacity:0.7;"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;font-size:7px;">
+            <span style="background:#12141c;padding:3px 6px;border-radius:4px;">📐 MA多头</span>
+            <span style="background:#12141c;padding:3px 6px;border-radius:4px;color:var(--accent);">📊 KDJ金叉</span>
+            <span style="background:#12141c;padding:3px 6px;border-radius:4px;">📈 放量</span>
+          </div>
+          <div class="bottom-bar">
+            <div class="bb-item">📊 基本面</div>
+            <div class="bb-item">📰 资讯</div>
+            <div class="bb-item">🏷️ 分类</div>
+            <div class="bb-item">➕ 模拟</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 3: 量化选股 -->
+    <div class="mockup-card">
+      <div class="label">🧠 条件选股 <small>Stock Screener</small></div>
+      <div class="preview">
+        <div class="mockup-screen">
+          <div class="screen-header"><span>← 选股策略</span><span>➕ 新建</span></div>
+          <div style="font-size:11px;font-weight:700;">我的策略</div>
+          <div style="display:flex;gap:3px;overflow:hidden;">
+            <div style="background:var(--accent);color:#000;padding:2px 7px;border-radius:10px;font-size:7px;font-weight:600;">全部</div>
+            <div style="background:#1e202a;padding:2px 7px;border-radius:10px;font-size:7px;">技术</div>
+            <div style="background:#1e202a;padding:2px 7px;border-radius:10px;font-size:7px;">基本面</div>
+            <div style="background:#1e202a;padding:2px 7px;border-radius:10px;font-size:7px;">自定义</div>
+          </div>
+          <div class="screen-list">
+            <div class="list-row" style="border-left:2px solid var(--accent);padding-left:4px;flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;">
+                <strong>均线多头排列</strong>
+                <span style="font-size:7px;background:var(--accent);color:#000;padding:1px 5px;border-radius:8px;">28只</span>
+              </div>
+              <span style="font-size:7px;color:var(--text-secondary);">条件: MA5>MA10>MA20 + 股价>MA60</span>
+            </div>
+            <div class="list-row" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;">
+                <strong>MACD 零轴金叉</strong>
+                <span style="font-size:7px;background:#1e202a;padding:1px 5px;border-radius:8px;">15只</span>
+              </div>
+              <span style="font-size:7px;color:var(--text-secondary);">条件: DIF上穿DEA + DIF>0 + 量比>1.5</span>
+            </div>
+            <div class="list-row" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;">
+                <strong>低估值成长股</strong>
+                <span style="font-size:7px;background:#1e202a;padding:1px 5px;border-radius:8px;">11只</span>
+              </div>
+              <span style="font-size:7px;color:var(--text-secondary);">条件: PE&lt;25 + ROE>15% + 营收增速>20%</span>
+            </div>
+            <div class="list-row" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;">
+                <strong>突破前高+放量</strong>
+                <span style="font-size:7px;background:#1e202a;padding:1px 5px;border-radius:8px;">6只</span>
+              </div>
+              <span style="font-size:7px;color:var(--text-secondary);">条件: 突破60日高点 + 成交量>2倍均量</span>
+            </div>
+          </div>
+          <div style="background:#12141c;border-radius:6px;padding:5px;font-size:8px;text-align:center;color:var(--blue);">
+            ⚡ 扫描范围: 120只 | 耗时: 0.3s
+          </div>
+          <div class="bottom-bar">
+            <div class="bb-item">🏠 概览</div>
+            <div class="bb-item active">🧠 选股</div>
+            <div class="bb-item">📋 自选</div>
+            <div class="bb-item">📊 跟踪</div>
+            <div class="bb-item">⚙️ 设置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 4: 模拟持仓跟踪 -->
+    <div class="mockup-card">
+      <div class="label">📊 模拟跟踪 <small>Paper Tracking</small></div>
+      <div class="preview">
+        <div class="mockup-screen">
+          <div class="screen-header"><span>← 模拟持仓</span><span>➕ 录入</span></div>
+          <div style="background:linear-gradient(135deg,#1e202a,#252830);border-radius:8px;padding:8px;text-align:center;">
+            <div style="font-size:7px;color:var(--text-secondary);">模拟总市值</div>
+            <div style="font-size:16px;font-weight:700;">528,360.50</div>
+            <div style="display:flex;justify-content:space-around;margin-top:4px;">
+              <div><span style="font-size:6px;color:var(--text-secondary);">当日盈亏</span><br><span class="up" style="font-size:9px;">+12,580</span></div>
+              <div><span style="font-size:6px;color:var(--text-secondary);">累计盈亏</span><br><span class="up" style="font-size:9px;">+28,360</span></div>
+              <div><span style="font-size:6px;color:var(--text-secondary);">组合收益率</span><br><span class="up" style="font-size:9px;">+5.67%</span></div>
+            </div>
+          </div>
+          <div class="screen-list">
+            <div class="list-row" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;"><strong>贵州茅台</strong><span class="up">+3.21%</span></div>
+              <div style="font-size:7px;color:var(--text-secondary);display:flex;justify-content:space-between;width:100%;">
+                <span>200股 | 成本 1620</span><span>市值 334,800</span>
+              </div>
+            </div>
+            <div class="list-row" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;"><strong>宁德时代</strong><span class="down">-1.52%</span></div>
+              <div style="font-size:7px;color:var(--text-secondary);display:flex;justify-content:space-between;width:100%;">
+                <span>500股 | 成本 205.50</span><span>市值 101,200</span>
+              </div>
+            </div>
+            <div class="list-row" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;width:100%;"><strong>中芯国际</strong><span class="up">+5.80%</span></div>
+              <div style="font-size:7px;color:var(--text-secondary);display:flex;justify-content:space-between;width:100%;">
+                <span>1000股 | 成本 88.50</span><span>市值 92,360</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:7px;color:var(--text-secondary);text-align:center;">
+            ⚠️ 仅模拟跟踪，非实盘交易
+          </div>
+          <div class="bottom-bar">
+            <div class="bb-item">🏠 概览</div>
+            <div class="bb-item">🧠 选股</div>
+            <div class="bb-item">📋 自选</div>
+            <div class="bb-item active">📊 跟踪</div>
+            <div class="bb-item">⚙️ 设置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page 5: 设置 -->
+    <div class="mockup-card">
+      <div class="label">⚙️ 系统设置 <small>Settings</small></div>
+      <div class="preview">
+        <div class="mockup-screen">
+          <div class="screen-header"><span>← 设置</span><span>✓</span></div>
+          <div class="screen-list">
+            <div style="font-size:8px;font-weight:600;color:var(--text-secondary);">🔌 数据源</div>
+            <div class="list-row">
+              <span>数据源</span>
+              <span style="color:var(--green);">Tushare Pro ✓</span>
+            </div>
+            <div class="list-row">
+              <span>Token</span>
+              <span style="font-size:7px;">••••••••••••</span>
+            </div>
+            <div class="list-row">
+              <span>自动拉取</span>
+              <span style="color:var(--green);">每日 18:00</span>
+            </div>
+            <div style="font-size:8px;font-weight:600;color:var(--text-secondary);margin-top:4px;">📡 K线周期配置</div>
+            <div class="list-row">
+              <span>日线</span>
+              <span style="color:var(--green);">✓ 启用 (5年)</span>
+            </div>
+            <div class="list-row">
+              <span>周线</span>
+              <span style="color:var(--green);">✓ 日线合成</span>
+            </div>
+            <div class="list-row">
+              <span>月线</span>
+              <span style="color:var(--green);">✓ 日线合成</span>
+            </div>
+            <div class="list-row">
+              <span>分钟线</span>
+              <span style="color:var(--text-secondary);">⚬ 5分/15分/30分/60分</span>
+            </div>
+            <div style="font-size:8px;font-weight:600;color:var(--text-secondary);margin-top:4px;">📊 分析范围</div>
+            <div class="list-row">
+              <span>股票池数量</span>
+            <span>120 只</span>
+            </div>
+            <div class="list-row">
+              <span>分析线程数</span>
+            <span>4 核</span>
+            </div>
+            <div style="font-size:8px;font-weight:600;color:var(--text-secondary);margin-top:4px;">🗂️ 数据</div>
+            <div class="list-row" style="color:var(--text-secondary);"><span>数据库大小</span><span>48.2 MB</span></div>
+            <div class="list-row" style="color:var(--blue);"><span>导出数据 (CSV)</span><span>→</span></div>
+            <div class="list-row" style="color:var(--blue);"><span>导入数据</span><span>→</span></div>
+            <div class="list-row" style="color:var(--red);"><span>清空数据库</span><span>⚠️</span></div>
+          </div>
+          <div class="bottom-bar">
+            <div class="bb-item">🏠 概览</div>
+            <div class="bb-item">🧠 选股</div>
+            <div class="bb-item">📋 自选</div>
+            <div class="bb-item">📊 跟踪</div>
+            <div class="bb-item active">⚙️ 设置</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== 7. 功能详情 ======== -->
+<div class="section" id="s7">
+  <div class="section-title"><span class="icon">📋</span> 七、详细功能清单</div>
+  <div class="section-desc">P0 核心必备 / P1 重要增强 / P2 锦上添花</div>
+
+  <table class="feature-table">
+    <thead>
+      <tr>
+        <th style="width:6%">优先级</th>
+        <th style="width:12%">模块</th>
+        <th style="width:20%">功能</th>
+        <th>详细描述</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- P0 -->
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>数据管理</td>
+        <td>数据源配置</td>
+        <td>配置 Tushare Pro Token（或其他数据源），测试连接，查看 API 调用余量。数据源接口抽象，支持扩展</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>数据管理</td>
+        <td>股票池管理</td>
+        <td>添加/删除/搜索股票到分析池，支持按行业批量导入种子股票，股票列表可排序筛选</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>数据管理</td>
+        <td>数据拉取与更新</td>
+        <td>按股票池拉取历史数据 + 每日增量更新。<strong>K 线周期可配置：日线（必选）、分钟线（可选 5/15/30/60 分钟）</strong>。周线/月线优先由日线本地合成以减少存储和 API 调用。可设置定时自动拉取。显示拉取进度和失败重试</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>数据管理</td>
+        <td>分类体系管理</td>
+        <td>种子分类基于申万行业划分。用户可新建/编辑/删除自定义分类，股票可标记多分类，支持按分类筛选</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>行情看盘</td>
+        <td>大盘仪表盘</td>
+        <td>展示已拉取的主要指数行情（上证/深证/创业板等），股票池整体涨跌分布，各分类板块涨跌概览</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>行情看盘</td>
+        <td>个股K线图表</td>
+        <td>从 SQLite 读取历史数据渲染 K 线图，支持日/周/月/60分钟K 切换，可缩放拖拽，十字光标查看详情</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>行情看盘</td>
+        <td>技术指标叠加</td>
+        <td>主图指标：MA/BOLL。副图指标：MACD/KDJ/RSI/WR/OBV。本地实时计算，可自由组合显示</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>量化选股</td>
+        <td>预置选股策略</td>
+        <td>系统预置 8-12 个常用策略模板（均线多头/MACD金叉/放量突破/低估值等），用户可直接运行</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p0">P0</span></td>
+        <td>量化选股</td>
+        <td>策略扫描执行</td>
+        <td>选择一个策略 → 遍历股票池所有股票 → 逐只计算条件 → 返回匹配结果列表。扫描范围由用户设置控制</td>
+      </tr>
+      <!-- P1 -->
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>量化选股</td>
+        <td>策略编辑器</td>
+        <td>可视化创建自定义策略：选择因子 → 设置参数 → 组合且/或逻辑 → 保存为个人策略。参数可随时调整</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>量化选股</td>
+        <td>本地回测</td>
+        <td>选择策略 + 回测区间 → 本地计算模拟交易 → 输出收益曲线/最大回撤/胜率/夏普比率。考虑到手机性能，回测股票数量有上限提示</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>量化选股</td>
+        <td>多策略对比</td>
+        <td>同时展示多个策略的扫描结果，对比各策略匹配的股票集合异同</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>模拟跟踪</td>
+        <td>模拟持仓管理</td>
+        <td>手动录入模拟持仓（股票/数量/成本价），或 CSV 批量导入。本地计算实时盈亏、累计收益</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>模拟跟踪</td>
+        <td>收益分析图表</td>
+        <td>资产曲线图、月度盈亏日历、个股收益贡献排名、与基准指数对比走势</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>数据管理</td>
+        <td>数据导入导出</td>
+        <td>CSV/Excel 格式导入历史行情数据，数据库整体导出备份，支持本地文件系统或分享到其他应用</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p1">P1</span></td>
+        <td>本地提醒</td>
+        <td>选股结果通知</td>
+        <td>设置定时任务（如每日收盘后）自动拉取数据 + 运行策略，匹配结果通过本地通知展示</td>
+      </tr>
+      <!-- P2 -->
+      <tr>
+        <td><span class="badge badge-p2">P2</span></td>
+        <td>行情看盘</td>
+        <td>AI 形态识别</td>
+        <td>基于规则引擎识别经典 K 线形态（头肩顶底/双底/三角形/旗形），在图表上标注识别结果</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p2">P2</span></td>
+        <td>量化选股</td>
+        <td>基本面因子整合</td>
+        <td>拉取季报/年报财务数据（PE/PB/ROE/营收增速等），支持基本面 + 技术面混合策略条件</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p2">P2</span></td>
+        <td>量化选股</td>
+        <td>策略信号日历</td>
+        <td>以日历视图展示每日策略触发的信号数量，快速回看历史信号表现</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p2">P2</span></td>
+        <td>数据</td>
+        <td>龙虎榜/北向资金</td>
+        <td>通过 Tushare 拉取龙虎榜和北向资金数据，辅助选股决策（需额外数据权限）</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-p2">P2</span></td>
+        <td>系统</td>
+        <td>Widget 桌面小组件</td>
+        <td>iOS/Android 桌面小部件，快速查看股票池概览或策略信号数量</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ======== 8. 量化分析引擎 ======== -->
+<div class="section" id="s8">
+  <div class="section-title"><span class="icon">🧠</span> 八、本地量化分析引擎设计</div>
+  <div class="section-desc">运行在手机端的策略计算核心</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;">
+    <div class="overview-card">
+      <h3>⚙️ 引擎架构</h3>
+      <span class="en">Engine Architecture</span>
+      <ul>
+        <li><strong>策略 DSL</strong>：JSON 格式定义条件树，前端可视化编辑，后端高效解析</li>
+        <li><strong>扫描流程</strong>：加载策略 → 遍历股票池 → 读取 SQLite 行情 → 逐条件计算 → 输出匹配结果</li>
+        <li><strong>后台执行</strong>：计算放在后台线程（Dart Isolate / RN 原生线程），不阻塞 UI</li>
+        <li><strong>分批处理</strong>：每批 20 只股票，处理完一批立即更新 UI 进度</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>📐 技术面因子库</h3>
+      <span class="en">Technical Factors</span>
+      <ul>
+        <li>趋势类：MA 排列/交叉/距离、MACD 信号/背离</li>
+        <li>震荡类：KDJ 超买超卖、RSI 强弱、WR 威廉</li>
+        <li>通道类：布林带收口/扩张/突破</li>
+        <li>量价类：量比、放量/缩量、量价配合度</li>
+        <li>突破类：N 日新高/新低、箱体突破</li>
+        <li>所有指标本地计算，不依赖外部 API</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>📊 基本面因子库</h3>
+      <span class="en">Fundamental Factors</span>
+      <ul>
+        <li>估值：PE/PB/PS 及历史分位数</li>
+        <li>成长：营收/净利润同比增速</li>
+        <li>盈利质量：ROE/ROA/毛利率/净利率</li>
+        <li>财务健康：资产负债率/流动比率</li>
+        <li>分红：股息率、分红连续性</li>
+        <li>需拉取财报数据（季度更新）</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>🧪 策略 DSL 示例</h3>
+      <span class="en">Strategy DSL</span>
+      <div style="background:#12141c;border-radius:8px;padding:14px;font-size:10px;font-family:'SF Mono',monospace;overflow-x:auto;line-height:1.7;">
+        {<br>
+        &nbsp;&nbsp;"name": "均线多头+放量突破",<br>
+        &nbsp;&nbsp;"logic": "AND",<br>
+        &nbsp;&nbsp;"enabled": true,<br>
+        &nbsp;&nbsp;"conditions": [<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"factor": "ma_position",<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"params": {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ma_list": [5,10,20,60],<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"relation": "bullish_align"<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;},<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"logic": "OR",<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"conditions": [<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":20,"m":2.0}},<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":60,"m":1.5}}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;]<br>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 24px; padding: 20px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);">
+    <h4 style="margin-bottom: 12px;">📱 手机端性能考量</h4>
+    <table class="feature-table" style="font-size:13px;">
+      <thead><tr><th>场景</th><th>数据量</th><th>预估耗时</th><th>策略</th></tr></thead>
+      <tbody>
+        <tr><td>单只股票日线指标计算</td><td>5年日线 (~1200 条)</td><td>&lt; 5ms</td><td>直接计算，无需优化</td></tr>
+        <tr><td>日线 → 周线/月线本地合成</td><td>1200 条日线 → 250 周线</td><td>&lt; 2ms/只</td><td>SQL 聚合或 Dart 循环重采样，无需额外 API 调用</td></tr>
+        <tr><td>分钟线指标计算</td><td>1年60分线 (~50,000 条)</td><td>~20-50ms/只</td><td>仅用户配置后才拉取和计算，默认关闭</td></tr>
+        <tr><td>扫描 100 只股票 × 日线策略</td><td>100 × 1200 条</td><td>~2-5 秒</td><td>多线程分批 + 进度条 UI</td></tr>
+        <tr><td>单策略回测 (100只 × 5年日线)</td><td>100 × 1200 条</td><td>~3-8 秒</td><td>后台 Isolate 执行，分批计算</td></tr>
+        <tr><td>多策略并行扫描 (5策略 × 200只)</td><td>5 × 200 × 1200 条</td><td>~10-30 秒</td><td>用户设置分析数量上限，默认提示 200 只以内</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;padding:12px;background:#12141c;border-radius:8px;font-size:13px;color:var(--text-secondary);">
+      <strong>💡 周线/月线本地合成策略：</strong>优先从日线数据聚合生成（按周/月 OHLC），仅当用户明确需要原始交易所周线/月线时才单独拉取。此策略可减少 40-60% 的 API 调用量和存储空间。
+    </div>
+    <div style="margin-top:8px;padding:12px;background:#12141c;border-radius:8px;font-size:13px;color:var(--text-secondary);">
+      <strong>💡 分钟线按需拉取：</strong>分钟线数据量约为日线的 40 倍（1 年 60 分线≈5 万条），默认不拉取。用户可在设置中按周期粒度（5/15/30/60 分钟）选择性开启，系统会给出存储空间预估提示。
+    </div>
+  </div>
+</div>
+
+<!-- ======== 9. 数据库设计 ======== -->
+<div class="section" id="s9">
+  <div class="section-title"><span class="icon">🗄️</span> 九、SQLite 数据库设计</div>
+  <div class="section-desc">本地表结构设计 — 轻量、高效、可导出</div>
+
+  <table class="feature-table">
+    <thead>
+      <tr><th>表名</th><th>核心字段</th><th>预估行数</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>stocks</strong></td>
+        <td>ts_code, symbol, name, area, industry, list_date, is_hs, enabled</td>
+        <td>~200</td>
+        <td>股票基础信息表。industry 为种子行业分类。enabled 标记是否纳入分析范围</td>
+      </tr>
+      <tr>
+        <td><strong>categories</strong></td>
+        <td>id, name, parent_id, is_seed, sort_order</td>
+        <td>~100</td>
+        <td>分类表。is_seed=1 为系统种子行业，is_seed=0 为用户自定义分类。支持父子层级</td>
+      </tr>
+      <tr>
+        <td><strong>stock_category</strong></td>
+        <td>stock_code, category_id</td>
+        <td>~500</td>
+        <td>股票-分类多对多关联表</td>
+      </tr>
+      <tr>
+        <td><strong>daily_quotes</strong></td>
+        <td>ts_code, trade_date, open, high, low, close, pre_close, change, pct_chg, vol, amount</td>
+        <td>~240,000<br>(200只×5年)</td>
+        <td><strong>日线表（必选）</strong>。核心数据表。周线/月线可由日线本地合成，减少存储。索引：ts_code + trade_date</td>
+      </tr>
+      <tr>
+        <td><strong>minute_quotes</strong></td>
+        <td>ts_code, trade_time, period, open, high, low, close, vol, amount</td>
+        <td>按需<br>(可选)</td>
+        <td><strong>分钟线表（可选）</strong>。period 字段区分 5/15/30/60 分钟。用户按需配置拉取，存储开销大（单只 1 年 60 分线≈50,000 条）</td>
+      </tr>
+      <tr>
+        <td><strong>index_daily</strong></td>
+        <td>ts_code, trade_date, close, open, high, low, change, pct_chg, vol, amount</td>
+        <td>~10,000</td>
+        <td>指数日线行情</td>
+      </tr>
+      <tr>
+        <td><strong>strategies</strong></td>
+        <td>id, name, category, conditions_json, created_at, updated_at</td>
+        <td>~50</td>
+        <td>策略表。conditions_json 存储策略 DSL JSON</td>
+      </tr>
+      <tr>
+        <td><strong>scan_results</strong></td>
+        <td>strategy_id, ts_code, trade_date, match_score, matched_conditions</td>
+        <td>~10,000</td>
+        <td>扫描结果缓存。同一策略+日期不重复扫描</td>
+      </tr>
+      <tr>
+        <td><strong>mock_positions</strong></td>
+        <td>id, ts_code, shares, avg_cost, buy_date, notes</td>
+        <td>~50</td>
+        <td>模拟持仓表。用户手动录入，非实盘</td>
+      </tr>
+      <tr>
+        <td><strong>data_source_config</strong></td>
+        <td>key, value</td>
+        <td>~20</td>
+        <td>数据源配置键值对：provider, token, auto_sync_time 等</td>
+      </tr>
+      <tr>
+        <td><strong>app_settings</strong></td>
+        <td>key, value</td>
+        <td>~20</td>
+        <td>应用设置：分析股票数上限、线程数、主题等</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:20px;padding:18px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);">
+    <h4 style="margin-bottom:8px;">📐 关键索引</h4>
+    <div style="font-size:13px;font-family:monospace;color:var(--text-secondary);line-height:2;">
+      CREATE INDEX idx_daily_code_date ON daily_quotes(ts_code, trade_date);<br>
+      CREATE INDEX idx_daily_date ON daily_quotes(trade_date);<br>
+      CREATE INDEX idx_stock_industry ON stocks(industry);<br>
+      CREATE INDEX idx_scan_strategy_date ON scan_results(strategy_id, trade_date);
+    </div>
+  </div>
+</div>
+
+<!-- ======== 10. 技术选型 ======== -->
+<div class="section" id="s10">
+  <div class="section-title"><span class="icon">🛠️</span> 十、技术选型</div>
+  <div class="section-desc">纯本地移动端技术栈，零服务器依赖</div>
+
+  <div class="tech-grid">
+    <div class="tech-item">
+      <div class="icon">📱</div>
+      <h4>Flutter</h4>
+      <p>跨平台 UI 框架<br>iOS + Android 一套代码<br>Canvas 高性能图表渲染<br>Dart Isolate 后台计算</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">💾</div>
+      <h4>sqflite</h4>
+      <p>SQLite 本地数据库<br>Flutter 生态最成熟<br>支持批量插入事务<br>数据库文件可导出</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">📊</div>
+      <h4>fl_chart / 自研</h4>
+      <p>K 线图渲染<br>Candlestick chart<br>手势缩放拖拽<br>多指标叠加</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">🔌</div>
+      <h4>dio / http</h4>
+      <p>HTTP 客户端<br>请求 Tushare REST API<br>请求重试 + 缓存<br>可扩展其他数据源</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">🧮</div>
+      <h4>自研计算引擎</h4>
+      <p>纯 Dart 实现<br>技术指标计算 (TA)<br>策略条件评估<br>无原生依赖</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">📂</div>
+      <h4>share_plus / csv</h4>
+      <p>数据导入导出<br>CSV 文件读写<br>系统分享菜单<br>文件选择器</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">🔔</div>
+      <h4>本地通知</h4>
+      <p>flutter_local_notifications<br>定时后台任务<br>选股结果通知<br>无需推送服务器</p>
+    </div>
+    <div class="tech-item">
+      <div class="icon">⚙️</div>
+      <h4>shared_preferences</h4>
+      <p>轻量配置存储<br>Token/设置项<br>快速读写</p>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);">
+    <h4 style="margin-bottom:12px;">🤔 为什么选 Flutter？</h4>
+    <ul style="color:var(--text-secondary);font-size:14px;padding-left:20px;display:flex;flex-direction:column;gap:4px;">
+      <li><strong>Canvas 渲染</strong>：K 线图需要高性能自绘，Flutter 的 Skia 引擎比 React Native 的桥接模式更适合复杂图表</li>
+      <li><strong>Dart Isolate</strong>：后台计算不阻塞 UI，天然适合批量技术指标运算场景</li>
+      <li><strong>sqflite 成熟</strong>：Flutter 的 SQLite 插件生态比 RN 更稳定可靠</li>
+      <li><strong>应用体积</strong>：纯本地工具不需要 RN 的 JS Bundle 加载，启动更快</li>
+      <li><strong>备选</strong>：如果团队更熟悉 React Native，也可用 RN + 原生 Canvas 模块 + react-native-sqlite-storage</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======== 11. 版本路线 ======== -->
+<div class="section" id="s11">
+  <div class="section-title"><span class="icon">🗺️</span> 十一、版本迭代路线图</div>
+  <div class="section-desc">聚焦本地能力，逐步迭代</div>
+
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="time">V0.5 · 数据基础 (4-6 周)</div>
+      <h4>🗄️ 数据链路打通</h4>
+      <p>数据源配置页（Tushare Token）、股票池管理（手动添加 + 行业种子导入）、数据拉取（历史日线 + 增量更新）、SQLite 表结构建好。目标：用户能成功拉取 50 只股票的历史数据并存到手机。</p>
+    </div>
+    <div class="roadmap-item">
+      <div class="time">V1.0 · 图表分析 (8-10 周)</div>
+      <h4>📊 K 线图表 + 技术指标</h4>
+      <p>个股 K 线渲染（日/周/月/60分）、十字光标、技术指标计算与叠加（MA/MACD/KDJ/RSI/VOL）、大盘仪表盘、分类管理。目标：用户可以浏览和分析已导入的股票。</p>
+    </div>
+    <div class="roadmap-item">
+      <div class="time">V1.5 · 量化选股 (12-14 周)</div>
+      <h4>🧠 策略引擎 + 条件选股</h4>
+      <p>策略 DSL 解析引擎、预置 10+ 策略模板、策略扫描（遍历股票池）、扫描结果展示、自定义策略编辑器（可视化搭建）、回测引擎第一版。目标：用户可用策略筛选股票池。</p>
+    </div>
+    <div class="roadmap-item">
+      <div class="time">V2.0 · 完整工具 (16-20 周)</div>
+      <h4>📋 模拟跟踪 + 数据管理</h4>
+      <p>模拟持仓录入与盈亏计算、收益曲线、多策略对比、数据 CSV 导入导出、分类体系完善、基本面因子（财报）、本地通知提醒。目标：完整的选股分析闭环。</p>
+    </div>
+    <div class="roadmap-item">
+      <div class="time">V2.5+ · 持续增强 (长期)</div>
+      <h4>✨ 形态识别 + 优化</h4>
+      <p>K 线形态识别、策略信号日历、Widget 桌面组件、性能优化（更大股票池）、数据源适配扩展（支持 AKShare 等更多数据源）。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:48px 0;color:var(--text-secondary);font-size:13px;">
+  <p>📈 个人量化选股分析工具 — 产品设计方案 V2.0 (纯本地版)</p>
+  <p style="margin-top:4px;">2026.06.10 · 待审核 · 零服务器 · 全本地计算 · SQLite 存储</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Flutter / Dart
+build/
+.dart_tool/
+.packages
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Android
+*.apk
+*.aab
+*.keystore
+local.properties
+
+# iOS
+Pods/
+*.xcworkspace
+*.xcuserdata
+
+# Dependencies
+node_modules/
+pubspec.lock
+
+# Environment
+.env
+*.log

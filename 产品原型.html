@@ -1,0 +1,2713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>QuantAxis · 迭代版本原型</title>
+<style>
+  :root {
+    --phone-bg: #000000;
+    --sheet: #1c1c1e;
+    --card: #2c2c2e;
+    --separator: #38383a;
+    --text: #ffffff;
+    --text-secondary: #98989d;
+    --text-tertiary: #636366;
+    --red: #ff453a;
+    --green: #30d158;
+    --blue: #0a84ff;
+    --accent: #ff9f0a;
+    --nav-text: #ffffff;
+    --canvas-bg: #1c1c1e;
+  }
+  body.theme-dark { }
+  body.theme-midnight {
+    --phone-bg: #0a0e27;
+    --sheet: #141a3a;
+    --card: #1e2550;
+    --separator: #2a3366;
+    --canvas-bg: #141a3a;
+  }
+  body.theme-charcoal {
+    --phone-bg: #1a1a1a;
+    --sheet: #242424;
+    --card: #333333;
+    --separator: #404040;
+    --canvas-bg: #242424;
+  }
+  body.theme-light {
+    --phone-bg: #f2f2f7;
+    --sheet: #ffffff;
+    --card: #ffffff;
+    --separator: #e5e5ea;
+    --text: #000000;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #aeaeb2;
+    --red: #ff3b30;
+    --green: #34c759;
+    --blue: #007aff;
+    --accent: #ff9500;
+    --nav-text: #000000;
+    --canvas-bg: #ffffff;
+  }
+  body.theme-warm {
+    --phone-bg: #1c1814;
+    --sheet: #2a231c;
+    --card: #352d24;
+    --separator: #4a3f34;
+    --canvas-bg: #2a231c;
+    --accent: #e8a850;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0a0a;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    gap: 20px;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.4s;
+  }
+
+  /* ==================== TOP CONTROLS ==================== */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+  .control-group {
+    display: flex;
+    background: #1c1c1e;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #2c2c2e;
+  }
+  .ctrl-btn {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #98989d;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .ctrl-btn:active { transform: scale(0.95); }
+  .ctrl-btn.active {
+    background: #2c2c2e;
+    color: #ffffff;
+  }
+  .ctrl-btn.accent-active.active {
+    background: #ff9f0a;
+    color: #000;
+  }
+  .control-label {
+    font-size: 11px;
+    color: #636366;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 4px;
+  }
+
+  /* Theme dots */
+  .theme-dot {
+    width: 20px; height: 20px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 4px;
+  }
+  .theme-dot:hover { transform: scale(1.15); }
+  .theme-dot.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+  body.theme-light .theme-dot.active { border-color: #000; box-shadow: 0 0 8px rgba(0,0,0,0.2); }
+
+  /* ==================== PHONE ==================== */
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--phone-bg);
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 3px #1a1a1a, 0 0 0 6px #0d0d0d, 0 20px 60px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    transition: background 0.4s;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    transition: color 0.3s;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 11px; }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 24px 12px;
+    flex-shrink: 0;
+  }
+  .nav-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--nav-text);
+    transition: color 0.3s;
+  }
+  .nav-action {
+    width: 36px; height: 36px;
+    border-radius: 18px;
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  .nav-action:active { background: var(--separator); transform: scale(0.92); }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 20px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  .content::-webkit-scrollbar { display: none; }
+
+  .screen { display: none; flex-direction: column; height: 100%; }
+  .screen.active { display: flex; }
+
+  /* ==================== CARDS ==================== */
+  .card {
+    background: var(--sheet);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    transition: background 0.3s;
+  }
+  .index-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .index-item {
+    flex: 1;
+    background: var(--sheet);
+    border-radius: 16px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s, background 0.3s;
+  }
+  .index-item:active { background: var(--card); transform: scale(0.96); }
+  .index-item .name { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; letter-spacing: 0.3px; transition: color 0.3s; }
+  .index-item .value { font-size: 16px; font-weight: 600; font-feature-settings: "tnum"; letter-spacing: -0.3px; }
+  .index-item .change { font-size: 12px; font-weight: 500; margin-top: 2px; }
+
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; padding: 0 2px;
+  }
+  .section-label {
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.3s;
+  }
+
+  .stock-row {
+    display: flex; align-items: center; padding: 14px 0;
+    border-bottom: 0.5px solid var(--separator);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .stock-row:last-child { border-bottom: none; }
+  .stock-row:active { opacity: 0.6; }
+  .stock-info { flex: 1; }
+  .stock-name { font-size: 16px; font-weight: 500; margin-bottom: 2px; color: var(--text); transition: color 0.3s; }
+  .stock-code { font-size: 12px; color: var(--text-tertiary); }
+  .stock-price { text-align: right; font-size: 16px; font-weight: 500; font-feature-settings: "tnum"; color: var(--text); }
+  .stock-change { text-align: right; font-size: 13px; font-weight: 500; margin-top: 2px; }
+  .stock-change.up { color: var(--red); }
+  .stock-change.down { color: var(--green); }
+
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tag {
+    padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--card); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s; border: none;
+  }
+  .tag:active { transform: scale(0.94); }
+  .tag.active { background: var(--text); color: var(--phone-bg); }
+
+  .search-bar {
+    display: flex; align-items: center; background: var(--sheet);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; gap: 8px;
+  }
+  .search-bar .icon { color: var(--text-tertiary); font-size: 15px; }
+  .search-bar .placeholder { color: var(--text-tertiary); font-size: 15px; }
+
+  /* Chart */
+  .chart-container {
+    background: var(--sheet); border-radius: 16px; padding: 16px;
+    margin-bottom: 12px; position: relative; overflow: hidden; transition: background 0.3s;
+  }
+  .chart-periods { display: flex; gap: 4px; margin-bottom: 12px; }
+  .period-btn {
+    padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    border: none; cursor: pointer; background: transparent; color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .period-btn:active { transform: scale(0.94); }
+  .period-btn.active { background: var(--text); color: var(--phone-bg); }
+  .chart-area { width: 100%; height: 200px; position: relative; }
+  .chart-area canvas { width: 100%; height: 100%; display: block; }
+  .indicator-row { display: flex; gap: 4px; margin-top: 10px; }
+  .indicator-btn {
+    padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 500;
+    border: none; cursor: pointer; background: transparent; color: var(--text-tertiary);
+    transition: all 0.2s;
+  }
+  .indicator-btn:active { transform: scale(0.94); }
+  .indicator-btn.active { background: var(--card); color: var(--text); }
+
+  .stock-header { padding: 4px 0 8px; }
+  .stock-header .name-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .stock-header .stock-name-lg { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+  .stock-header .stock-code-sm { font-size: 13px; color: var(--text-tertiary); }
+  .stock-header .price-row { display: flex; align-items: baseline; gap: 10px; }
+  .stock-header .current-price { font-size: 36px; font-weight: 200; letter-spacing: -1px; font-feature-settings: "tnum"; color: var(--text); }
+  .stock-header .price-change { font-size: 16px; font-weight: 500; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .stat-item { text-align: center; padding: 10px 6px; }
+  .stat-value { font-size: 15px; font-weight: 500; font-feature-settings: "tnum"; color: var(--text); }
+  .stat-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .signal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .signal-tag { font-size: 11px; padding: 6px 10px; border-radius: 6px; background: var(--card); color: var(--text-secondary); }
+  .signal-tag.highlight { background: rgba(255,159,10,0.15); color: var(--accent); }
+
+  .strategy-card {
+    background: var(--sheet); border-radius: 16px; padding: 18px;
+    margin-bottom: 10px; cursor: pointer; transition: all 0.2s, background 0.3s;
+    border-left: 3px solid transparent;
+  }
+  .strategy-card:active { transform: scale(0.98); background: var(--card); }
+  .strategy-card.running { border-left-color: var(--accent); }
+  .strategy-name { font-size: 17px; font-weight: 500; margin-bottom: 4px; color: var(--text); }
+  .strategy-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.4; }
+  .strategy-meta { display: flex; justify-content: space-between; align-items: center; }
+  .match-count { font-size: 13px; font-weight: 600; color: var(--accent); }
+
+  .portfolio-summary {
+    background: var(--sheet); border-radius: 20px; padding: 24px 20px;
+    text-align: center; margin-bottom: 16px; transition: background 0.3s;
+  }
+  .portfolio-total-label { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .portfolio-total-value { font-size: 42px; font-weight: 200; letter-spacing: -1px; font-feature-settings: "tnum"; color: var(--text); }
+  .portfolio-pnl-row { display: flex; justify-content: center; gap: 32px; margin-top: 16px; }
+  .pnl-item { text-align: center; }
+  .pnl-value { font-size: 18px; font-weight: 500; font-feature-settings: "tnum"; color: var(--text); }
+  .pnl-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .settings-group { margin-bottom: 20px; }
+  .settings-group-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 4px; margin-bottom: 8px; }
+  .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 4px; border-bottom: 0.5px solid var(--separator); cursor: pointer; transition: all 0.15s; }
+  .setting-row:active { opacity: 0.6; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 16px; color: var(--text); }
+  .setting-value { font-size: 16px; color: var(--text-secondary); }
+  .setting-value.connected { color: var(--green); }
+
+  .toggle {
+    width: 48px; height: 28px; border-radius: 14px;
+    background: var(--separator); position: relative;
+    cursor: pointer; transition: all 0.3s; border: none;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle::after {
+    content: ''; position: absolute; width: 24px; height: 24px;
+    border-radius: 12px; background: #fff; top: 2px; left: 2px;
+    transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle.on::after { left: 22px; }
+
+  .tab-bar {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 8px 8px 20px; background: var(--phone-bg);
+    border-top: 0.5px solid var(--separator); flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .tab-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 6px 14px; border-radius: 10px;
+    transition: all 0.2s; border: none; background: none;
+  }
+  .tab-item:active { background: var(--card); }
+  .tab-icon { font-size: 20px; opacity: 0.4; transition: all 0.2s; }
+  .tab-label { font-size: 10px; font-weight: 500; color: var(--text-tertiary); transition: all 0.2s; }
+  .tab-item.active .tab-icon { opacity: 1; }
+  .tab-item.active .tab-label { color: var(--accent); }
+
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 600;
+    background: rgba(255,159,10,0.2); color: var(--accent);
+    margin-left: 6px;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 16px; color: var(--accent); cursor: pointer;
+    padding: 8px 0; margin-bottom: 8px; border: none; background: none;
+    transition: opacity 0.2s;
+  }
+  .back-btn:active { opacity: 0.5; }
+
+  /* Version badge */
+  .version-badge {
+    position: absolute; bottom: 100px; right: 16px;
+    background: var(--accent); color: #000;
+    font-size: 10px; font-weight: 700; padding: 4px 10px;
+    border-radius: 12px; z-index: 10; letter-spacing: 1px;
+    pointer-events: none;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--text-tertiary);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state .title { font-size: 18px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+  .empty-state .desc { font-size: 13px; line-height: 1.5; }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 4px; background: var(--separator); border-radius: 2px;
+    overflow: hidden; margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%; background: var(--blue); border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.35s ease-out; }
+
+  .disclaimer {
+    font-size: 10px; color: var(--text-tertiary);
+    text-align: center; padding: 12px 0; line-height: 1.5;
+  }
+
+  /* ==================== IMPORT SCREEN ==================== */
+  .import-hero {
+    text-align: center; padding: 16px 0 20px;
+  }
+  .import-hero .big-icon { font-size: 40px; margin-bottom: 8px; }
+  .import-hero .import-title { font-size: 20px; font-weight: 600; color: var(--text); }
+  .import-hero .import-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  .import-card {
+    background: var(--sheet); border-radius: 16px; padding: 18px;
+    margin-bottom: 12px; cursor: pointer; transition: all 0.2s, background 0.3s;
+    border: 1.5px solid transparent;
+  }
+  .import-card:active { transform: scale(0.98); }
+  .import-card.selected { border-color: var(--blue); background: var(--card); }
+  .import-card-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
+  }
+  .import-card-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .import-card-icon.seed { background: rgba(10,132,255,0.15); }
+  .import-card-icon.manual { background: rgba(48,209,88,0.15); }
+  .import-card-icon.csv { background: rgba(255,159,10,0.15); }
+  .import-card-title { font-size: 16px; font-weight: 500; color: var(--text); }
+  .import-card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Industry seed grid */
+  .industry-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin: 12px 0;
+  }
+  .industry-chip {
+    padding: 10px 6px; border-radius: 10px; text-align: center;
+    font-size: 11px; font-weight: 500;
+    background: var(--card); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent;
+  }
+  .industry-chip:active { transform: scale(0.94); }
+  .industry-chip.selected {
+    border-color: var(--blue); color: var(--blue);
+    background: rgba(10,132,255,0.1);
+  }
+  .industry-chip .count { font-size: 9px; color: var(--text-tertiary); display: block; margin-top: 2px; }
+
+  .chip-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0;
+  }
+  .stock-chip {
+    padding: 6px 12px; border-radius: 16px; font-size: 11px;
+    background: var(--card); color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+  }
+  .stock-chip .remove { cursor: pointer; opacity: 0.5; font-size: 13px; }
+  .stock-chip .remove:hover { opacity: 1; color: var(--red); }
+
+  .preview-table {
+    width: 100%; font-size: 11px; border-collapse: collapse;
+    margin-top: 10px;
+  }
+  .preview-table th {
+    color: var(--text-tertiary); font-weight: 500; text-align: left;
+    padding: 6px 4px; border-bottom: 0.5px solid var(--separator);
+  }
+  .preview-table td {
+    padding: 6px 4px; border-bottom: 0.5px solid var(--separator);
+    color: var(--text-secondary); font-feature-settings: "tnum";
+  }
+  .preview-table td:first-child { color: var(--text); }
+
+  .btn-primary {
+    display: block; width: 100%; padding: 14px;
+    background: var(--blue); color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    font-family: inherit;
+    margin-top: 16px;
+  }
+  .btn-primary:active { transform: scale(0.97); opacity: 0.85; }
+  .btn-secondary {
+    display: block; width: 100%; padding: 14px;
+    background: var(--card); color: var(--text);
+    border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    font-family: inherit; margin-top: 8px;
+  }
+  .btn-secondary:active { transform: scale(0.97); opacity: 0.7; }
+
+  .import-step { display: none; }
+  .import-step.active { display: block; }
+
+  .toast {
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+    background: var(--green); color: #000; padding: 10px 24px;
+    border-radius: 20px; font-size: 13px; font-weight: 600;
+    z-index: 100; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ==================== STRATEGY EDITOR ==================== */
+  .editor-section {
+    margin-bottom: 16px;
+  }
+  .editor-section-title {
+    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .factor-row {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    background: var(--card); border-radius: 10px; margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .factor-row .remove-btn {
+    width: 22px; height: 22px; border-radius: 11px;
+    background: rgba(255,69,58,0.2); color: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 12px; flex-shrink: 0;
+    border: none;
+  }
+  .factor-select {
+    background: var(--sheet); color: var(--text); border: 1px solid var(--separator);
+    border-radius: 8px; padding: 12px; font-size: 14px;
+    width: 100%; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+  }
+  .param-input {
+    background: var(--sheet); color: var(--text); border: 1px solid var(--separator);
+    border-radius: 8px; padding: 10px; font-size: 13px;
+    width: 60px; text-align: center; font-family: inherit;
+  }
+  .logic-toggle {
+    display: flex; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--separator);
+  }
+  .logic-btn {
+    padding: 8px 16px; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; background: var(--sheet); color: var(--text-secondary);
+    transition: all 0.2s; font-family: inherit;
+  }
+  .logic-btn.active { background: var(--blue); color: #fff; }
+
+  /* Scan animation */
+  .scan-progress {
+    background: var(--sheet); border-radius: 16px; padding: 20px;
+    margin-bottom: 12px; text-align: center;
+  }
+  .scan-spinner {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid var(--separator);
+    border-top-color: var(--blue);
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scan-stats {
+    display: flex; justify-content: center; gap: 24px; margin-top: 10px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+
+  /* Industry filter */
+  .industry-filter-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .industry-filter-chip {
+    padding: 6px 12px; border-radius: 14px; font-size: 11px; font-weight: 500;
+    background: var(--card); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent;
+  }
+  .industry-filter-chip:active { transform: scale(0.94); }
+  .industry-filter-chip.active {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(255,159,10,0.1);
+  }
+
+  /* Three-strategy badge */
+  .triple-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,69,58,0.2), rgba(10,132,255,0.2), rgba(48,209,88,0.2));
+    font-size: 10px; font-weight: 700; color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  /* Portfolio detail */
+  .portfolio-chart-placeholder {
+    width: 100%; height: 140px; background: var(--card);
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; color: var(--text-tertiary); font-size: 13px;
+    margin: 12px 0;
+  }
+
+  /* Buy/Sell analysis */
+  .bs-signal-row {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 10px; margin-bottom: 6px; font-size: 12px;
+    background: var(--card);
+  }
+  .bs-dot {
+    width: 10px; height: 10px; border-radius: 5px; flex-shrink: 0;
+  }
+  .bs-dot.buy { background: var(--red); box-shadow: 0 0 8px rgba(255,69,58,0.5); }
+  .bs-dot.sell { background: var(--green); box-shadow: 0 0 8px rgba(48,209,88,0.5); }
+  .bs-dot.support { background: var(--blue); box-shadow: 0 0 8px rgba(10,132,255,0.5); }
+  .bs-dot.resist { background: var(--accent); box-shadow: 0 0 8px rgba(255,159,10,0.5); }
+  .bs-level-row {
+    display: flex; justify-content: space-around; padding: 12px 0;
+  }
+  .bs-level-item {
+    text-align: center;
+  }
+  .bs-level-price {
+    font-size: 18px; font-weight: 500; font-feature-settings: "tnum";
+  }
+
+  @media (max-width: 420px) {
+    .phone { width: 100vw; height: 100vh; border-radius: 0; box-shadow: none; }
+    body { padding: 0; }
+    .controls { padding: 8px; }
+  }
+</style>
+</head>
+<body class="theme-dark">
+
+<!-- ==================== TOP CONTROLS ==================== -->
+<div class="controls">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+    <span class="control-label">迭代版本</span>
+    <div class="control-group" id="versionControl">
+      <button class="ctrl-btn accent-active active" data-version="v05">V0.5 数据</button>
+      <button class="ctrl-btn accent-active" data-version="v10">V1.0 图表</button>
+      <button class="ctrl-btn accent-active" data-version="v15">V1.5 选股</button>
+      <button class="ctrl-btn accent-active" data-version="v20">V2.0 完整</button>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+    <span class="control-label">主题配色</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="theme-dot active" data-theme="dark" style="background:#000;border:2px solid #555;" title="深空黑"></span>
+      <span class="theme-dot" data-theme="midnight" style="background:#0a0e27;" title="午夜蓝"></span>
+      <span class="theme-dot" data-theme="charcoal" style="background:#1a1a1a;" title="炭灰"></span>
+      <span class="theme-dot" data-theme="light" style="background:#f2f2f7;" title="亮白"></span>
+      <span class="theme-dot" data-theme="warm" style="background:#1c1814;" title="暖棕"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PHONE ==================== -->
+<div class="phone" id="phone">
+
+  <div class="status-bar">
+    <span id="timeDisplay">9:41</span>
+    <div class="status-icons"><span>●●●●○</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <!-- ============ SCREEN: MAIN (version-dependent) ============ -->
+  <div class="screen active" id="screen-main">
+    <div class="nav">
+      <div class="nav-title" id="mainTitle">QuantAxis</div>
+      <button class="nav-action" onclick="showScreen('settings')">⚙️</button>
+    </div>
+    <div class="content fade-in" id="mainContent"></div>
+  </div>
+
+  <!-- ============ SCREEN: STOCK DETAIL ============ -->
+  <div class="screen" id="screen-detail">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('main')">← 返回</button>
+      <div class="stock-header">
+        <div class="name-row">
+          <span class="stock-name-lg">蓝英装备</span>
+          <span class="stock-code-sm">300293</span>
+          <span class="badge">自选</span>
+        </div>
+        <div class="price-row">
+          <span class="current-price">40.26</span>
+          <span class="price-change" style="color:var(--red);">+2.18 +5.72%</span>
+        </div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-periods">
+          <button class="period-btn" onclick="switchPeriod(this)">分时</button>
+          <button class="period-btn active" onclick="switchPeriod(this)">日K</button>
+          <button class="period-btn" onclick="switchPeriod(this)">周K</button>
+          <button class="period-btn" onclick="switchPeriod(this)">月K</button>
+          <button class="period-btn" onclick="switchPeriod(this)">60分</button>
+        </div>
+        <div class="chart-area"><canvas id="klineCanvas"></canvas></div>
+        <div class="indicator-row">
+          <button class="indicator-btn" onclick="switchIndicator(this)">MA</button>
+          <button class="indicator-btn active" onclick="switchIndicator(this)">MACD</button>
+          <button class="indicator-btn" onclick="switchIndicator(this)">KDJ</button>
+          <button class="indicator-btn" onclick="switchIndicator(this)">RSI</button>
+          <button class="indicator-btn" onclick="switchIndicator(this)">BOLL</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stats-grid">
+          <div class="stat-item"><div class="stat-value">38.20</div><div class="stat-label">今开</div></div>
+          <div class="stat-item"><div class="stat-value" style="color:var(--red)">41.50</div><div class="stat-label">最高</div></div>
+          <div class="stat-item"><div class="stat-value" style="color:var(--green)">37.88</div><div class="stat-label">最低</div></div>
+          <div class="stat-item"><div class="stat-value">128.5万</div><div class="stat-label">成交量</div></div>
+          <div class="stat-item"><div class="stat-value">5.2亿</div><div class="stat-label">成交额</div></div>
+          <div class="stat-item"><div class="stat-value">3.8%</div><div class="stat-label">换手率</div></div>
+        </div>
+      </div>
+      <!-- Buy/Sell Analysis -->
+      <div class="section-header" style="margin-top:8px;"><span class="section-label">🎯 买卖点分析</span></div>
+      <div class="card">
+        <!-- Signal summary - 5 columns -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(255,69,58,0.08);border-radius:10px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">买入</div>
+            <div style="font-size:18px;font-weight:600;color:var(--red);">3</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(48,209,88,0.08);border-radius:10px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">卖出</div>
+            <div style="font-size:18px;font-weight:600;color:var(--green);">1</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(10,132,255,0.08);border-radius:10px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">量能</div>
+            <div style="font-size:18px;font-weight:600;color:var(--blue);">2.3x</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(255,159,10,0.08);border-radius:10px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">换手</div>
+            <div style="font-size:18px;font-weight:600;color:var(--accent);">3.8%</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(255,159,10,0.08);border-radius:10px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">评分</div>
+            <div style="font-size:18px;font-weight:600;color:var(--accent);">78</div>
+          </div>
+        </div>
+
+        <!-- Volume + Turnover analysis -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(10,132,255,0.06);border-radius:10px;margin-bottom:10px;">
+          <span style="font-size:22px;">📊</span>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <strong style="font-size:13px;">成交量分析</strong>
+              <span style="font-size:11px;color:var(--text-secondary);">今日 128.5万手</span>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;">
+              <span>量比 <strong style="color:var(--red);">2.3</strong></span>
+              <span>20日均量 <strong>56万手</strong></span>
+            </div>
+            <div style="margin-top:6px;height:4px;background:var(--separator);border-radius:2px;">
+              <div style="width:65%;height:100%;background:var(--blue);border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary);margin-top:2px;">
+              <span>缩量</span><span>均量</span><span>放量</span><span style="color:var(--red);">▼ 今日 2.3x</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Turnover rate analysis -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,159,10,0.06);border-radius:10px;margin-bottom:10px;">
+          <span style="font-size:22px;">🔄</span>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <strong style="font-size:13px;">换手率分析</strong>
+              <span style="font-size:11px;color:var(--accent);font-weight:600;">3.8% · 活跃</span>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:5px;font-size:11px;">
+              <span>今日 <strong style="color:var(--accent);">3.8%</strong></span>
+              <span>5日均 <strong>2.9%</strong></span>
+              <span>20日均 <strong>2.1%</strong></span>
+              <span>流通市值 <strong>42亿</strong></span>
+            </div>
+            <div style="margin-top:6px;height:4px;background:var(--separator);border-radius:2px;">
+              <div style="width:76%;height:100%;background:var(--accent);border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-tertiary);margin-top:2px;">
+              <span>冷清 &lt;1%</span><span>正常 1-3%</span><span>活跃 3-7%</span><span style="color:var(--accent);">▲ 今日 3.8%</span><span>过热 &gt;7%</span>
+            </div>
+            <div style="margin-top:4px;font-size:10px;color:var(--text-secondary);">
+              换手率连续 3 日攀升（2.1%→2.9%→3.8%）· 市场关注度升温 · 短线资金介入明显
+            </div>
+          </div>
+        </div>
+
+        <!-- Signal detail -->
+        <div class="section-header"><span class="section-label">买入信号</span></div>
+        <div class="bs-signal-row">
+          <div class="bs-dot buy"></div>
+          <div style="flex:1;"><strong>KDJ 金叉 + 放量确认</strong><br><span style="font-size:10px;color:var(--text-tertiary);">K=42.3 ↑ D=38.6 · 当日量比 2.3x（有效突破）· 06-09</span></div>
+          <span style="color:var(--red);font-size:11px;font-weight:600;">强买入 ✓</span>
+        </div>
+        <div class="bs-signal-row">
+          <div class="bs-dot buy"></div>
+          <div style="flex:1;"><strong>MA5 上穿 MA20 + 量增</strong><br><span style="font-size:10px;color:var(--text-tertiary);">短中期均线金叉 · 成交量连续3日放大 · 06-07</span></div>
+          <span style="color:var(--red);font-size:11px;font-weight:600;">买入 ✓</span>
+        </div>
+        <div class="bs-signal-row">
+          <div class="bs-dot buy"></div>
+          <div style="flex:1;"><strong>箱体突破 + 巨量</strong><br><span style="font-size:10px;color:var(--text-tertiary);">突破 38.50 平台 · 单日量能达 20 日均量 2.8 倍 · 06-05</span></div>
+          <span style="color:var(--red);font-size:11px;font-weight:600;">突破买入 ✓</span>
+        </div>
+
+        <div class="section-header" style="margin-top:8px;"><span class="section-label">卖出/警示信号</span></div>
+        <div class="bs-signal-row">
+          <div class="bs-dot sell"></div>
+          <div style="flex:1;"><strong>RSI 超买 + 量价背离</strong><br><span style="font-size:10px;color:var(--text-tertiary);">14日 RSI=72.8 ↑ 但成交量较前日缩减 18% · 量价背离警示</span></div>
+          <span style="color:var(--green);font-size:11px;font-weight:600;">减仓注意</span>
+        </div>
+        <div class="bs-signal-row">
+          <div class="bs-dot sell"></div>
+          <div style="flex:1;"><strong>高位缩量滞涨</strong><br><span style="font-size:10px;color:var(--text-tertiary);">连续 3 日收于 40 上方但量能持续萎缩 · 上攻动能减弱</span></div>
+          <span style="color:var(--accent);font-size:11px;font-weight:600;">观察</span>
+        </div>
+
+        <!-- Support / Resistance -->
+        <div class="section-header" style="margin-top:8px;"><span class="section-label">📏 关键价位</span></div>
+        <div class="bs-level-row">
+          <div class="bs-level-item">
+            <div style="font-size:10px;color:var(--text-tertiary);">阻力位</div>
+            <div class="bs-level-price" style="color:var(--accent);">42.80</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">前高+布林上轨</div>
+          </div>
+          <div class="bs-level-item">
+            <div style="font-size:10px;color:var(--text-tertiary);">当前价</div>
+            <div class="bs-level-price">40.26</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">量比 2.3x</div>
+          </div>
+          <div class="bs-level-item">
+            <div style="font-size:10px;color:var(--text-tertiary);">支撑位 1</div>
+            <div class="bs-level-price" style="color:var(--blue);">38.50</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">MA20+密集成交</div>
+          </div>
+          <div class="bs-level-item">
+            <div style="font-size:10px;color:var(--text-tertiary);">支撑位 2</div>
+            <div class="bs-level-price" style="color:var(--blue);">36.20</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">MA60+前低</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strategy signals -->
+      <div class="section-header" style="margin-top:8px;"><span class="section-label">🧠 策略信号</span></div>
+      <div class="card">
+        <div class="signal-tags" style="margin-top:0;">
+          <span class="signal-tag highlight">📐 MA 多头排列 — 趋势向上</span>
+          <span class="signal-tag highlight">📊 KDJ 金叉 — 买入信号</span>
+          <span class="signal-tag">📈 放量突破 — 量能配合</span>
+          <span class="signal-tag">📉 RSI 68.5 — 偏强未超买</span>
+          <span class="signal-tag">📏 BOLL 上轨附近 — 注意压力</span>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+          <strong>策略匹配：</strong>趋势策略 ✓ · MACD零轴金叉 ✓ · 放量突破前高 ✓<br>
+          <span style="font-size:11px;color:var(--text-tertiary);">基于最新日线数据本地计算 · 仅作分析参考</span>
+        </div>
+      </div>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: STRATEGY RESULTS ============ -->
+  <div class="screen" id="screen-results">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('main')">← 策略</button>
+      <div class="stock-header">
+        <div class="name-row"><span class="stock-name-lg">均线多头排列</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">日线 MA5 > MA10 > MA20，且股价站稳 MA60 上方</div>
+      </div>
+      <div class="section-header" style="margin-top:16px;">
+        <span class="section-label">匹配结果 — 28 只股票</span>
+      </div>
+      <div class="card" id="resultList"></div>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: SETTINGS ============ -->
+  <div class="screen" id="screen-settings">
+    <div class="nav">
+      <div class="nav-title">设置</div>
+      <button class="nav-action" onclick="showScreen('main')">✓</button>
+    </div>
+    <div class="content fade-in">
+      <div class="settings-group">
+        <div class="settings-group-title">🔌 数据源</div>
+        <div class="card">
+          <div class="setting-row"><span class="setting-label">数据提供商</span><span class="setting-value connected">Tushare Pro</span></div>
+          <div class="setting-row"><span class="setting-label">API Token</span><span class="setting-value">••••••••••••</span></div>
+          <div class="setting-row"><span class="setting-label">自动更新</span><span class="setting-value">每日 18:00</span></div>
+          <div class="setting-row"><span class="setting-label">连接状态</span><span class="setting-value connected">✓ 已连接</span></div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">📡 K 线周期</div>
+        <div class="card">
+          <div class="setting-row"><span class="setting-label">日线</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <div class="setting-row"><span class="setting-label">周线</span><span class="setting-value" style="font-size:13px;">日线本地合成</span></div>
+          <div class="setting-row"><span class="setting-label">月线</span><span class="setting-value" style="font-size:13px;">日线本地合成</span></div>
+          <div class="setting-row" onclick="cycleMinute()"><span class="setting-label">分钟线</span><span class="setting-value" id="minuteVal" style="font-size:13px;">未启用</span></div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">📥 股票池</div>
+        <div class="card">
+          <div class="setting-row" onclick="showScreen('import')"><span class="setting-label">导入股票</span><span style="color:var(--blue);">种子 / 手动 / CSV →</span></div>
+          <div class="setting-row"><span class="setting-label">当前股票数</span><span class="setting-value">120 只</span></div>
+          <div class="setting-row"><span class="setting-label">行业覆盖</span><span class="setting-value">9 个行业</span></div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">📊 分析范围</div>
+        <div class="card">
+          <div class="setting-row"><span class="setting-label">股票池数量</span><span class="setting-value">120 只</span></div>
+          <div class="setting-row" onclick="cycleHistoryYears()"><span class="setting-label">历史数据年数</span><span class="setting-value" id="historyYears">3 年</span></div>
+          <div style="font-size:10px;color:var(--text-tertiary);padding:2px 4px 8px;">量化交易建议不超过 3 年，点击切换 1/2/3 年</div>
+          <div class="setting-row"><span class="setting-label">计算线程</span><span class="setting-value">自动 (4 核)</span></div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">🗂️ 数据</div>
+        <div class="card">
+          <div class="setting-row"><span class="setting-label">数据库大小</span><span class="setting-value">48.2 MB</span></div>
+          <div class="setting-row"><span class="setting-label">导出 CSV</span><span style="color:var(--text-tertiary);">→</span></div>
+          <div class="setting-row"><span class="setting-label">导入数据</span><span style="color:var(--text-tertiary);">→</span></div>
+          <div class="setting-row"><span class="setting-label" style="color:var(--red);">清空数据库</span><span style="color:var(--red);">⚠</span></div>
+        </div>
+      </div>
+      <div class="disclaimer">QuantAxis · 纯本地计算 · SQLite<br>数据完全掌控在您手中</div>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: IMPORT ============ -->
+  <div class="screen" id="screen-import">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('settings')">← 设置</button>
+
+      <div class="import-hero">
+        <div class="big-icon">📥</div>
+        <div class="import-title">导入股票</div>
+        <div class="import-sub">基础信息来自种子数据，行情由 Tushare 接口更新</div>
+      </div>
+
+      <!-- Step 1: Choose import method -->
+      <div class="import-step active" id="importStep1">
+        <div class="section-header"><span class="section-label">选择导入方式</span></div>
+
+        <div class="import-card" onclick="selectImportMethod('seed')" id="importCardSeed">
+          <div class="import-card-header">
+            <div class="import-card-icon seed">🌱</div>
+            <div class="import-card-title">行业种子导入</div>
+          </div>
+          <div class="import-card-desc">按申万行业分类批量导入股票基础信息（名称/代码/行业），预设种子数据，无需手动录入。后续通过 Tushare 拉取行情数据。</div>
+          <div style="font-size:11px;color:var(--blue);margin-top:8px;">推荐 · 快速建立股票池</div>
+        </div>
+
+        <div class="import-card" onclick="selectImportMethod('manual')" id="importCardManual">
+          <div class="import-card-header">
+            <div class="import-card-icon manual">✏️</div>
+            <div class="import-card-title">手动添加</div>
+          </div>
+          <div class="import-card-desc">输入股票代码或名称，单只添加到股票池。适合已有明确标的，需要精准控制的场景。</div>
+        </div>
+
+        <div class="import-card" onclick="selectImportMethod('csv')" id="importCardCsv">
+          <div class="import-card-header">
+            <div class="import-card-icon csv">📄</div>
+            <div class="import-card-title">CSV 文件导入</div>
+          </div>
+          <div class="import-card-desc">从 CSV 文件批量导入股票列表（需包含 ts_code 或 symbol 列）。适合从其他工具迁移数据。</div>
+        </div>
+      </div>
+
+      <!-- Step 2a: Industry Seed -->
+      <div class="import-step" id="importStepSeed">
+        <div class="section-header">
+          <span class="section-label">选择行业板块</span>
+          <span style="font-size:12px;color:var(--text-tertiary);cursor:pointer;" onclick="toggleAllIndustries()">全选/取消</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">勾选行业后，该行业下所有股票将作为种子导入基础信息</div>
+        <div class="industry-grid" id="industryGrid"></div>
+
+        <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--text-secondary);">预计导入 <strong style="color:var(--text);" id="seedCount">0</strong> 只股票</span>
+        </div>
+
+        <div id="seedPreview" style="margin-top:8px;"></div>
+
+        <button class="btn-primary" onclick="confirmSeedImport()">确认导入 → 拉取基础信息</button>
+        <button class="btn-secondary" onclick="goBackImportStep()">← 返回选择</button>
+      </div>
+
+      <!-- Step 2b: Manual Add -->
+      <div class="import-step" id="importStepManual">
+        <div class="section-header"><span class="section-label">手动添加股票</span></div>
+        <div class="search-bar" style="margin-top:8px;">
+          <span class="icon">🔍</span>
+          <span class="placeholder" id="manualSearchPlaceholder" style="flex:1;">输入股票代码或名称…</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">搜索结果基于预设种子数据库</div>
+        <div class="card" id="manualSearchResults" style="min-height:60px;">
+          <div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:13px;">输入代码或名称开始搜索</div>
+        </div>
+        <div class="section-header" style="margin-top:12px;"><span class="section-label">已添加 (<span id="manualAddedCount">0</span>)</span></div>
+        <div class="chip-row" id="manualAddedChips"></div>
+        <button class="btn-primary" onclick="confirmManualImport()">确认添加</button>
+        <button class="btn-secondary" onclick="goBackImportStep()">← 返回选择</button>
+      </div>
+
+      <!-- Step 2c: CSV Import -->
+      <div class="import-step" id="importStepCsv">
+        <div class="section-header"><span class="section-label">CSV 文件导入</span></div>
+        <div class="card" style="text-align:center;padding:30px;">
+          <div style="font-size:40px;margin-bottom:12px;">📄</div>
+          <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">选择 CSV 文件</div>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:12px;">需包含 ts_code 或 symbol 列<br>可选列: name, industry</div>
+          <button class="btn-primary" style="width:auto;display:inline-block;padding:10px 28px;" onclick="simulateCsvImport()">选择文件...</button>
+        </div>
+        <div id="csvPreview" style="margin-top:8px;"></div>
+        <button class="btn-primary" id="csvConfirmBtn" style="display:none;" onclick="confirmCsvImport()">确认导入</button>
+        <button class="btn-secondary" onclick="goBackImportStep()">← 返回选择</button>
+      </div>
+
+      <!-- Step 3: Import Complete -->
+      <div class="import-step" id="importStepComplete">
+        <div class="import-hero">
+          <div class="big-icon">✅</div>
+          <div class="import-title">导入完成</div>
+          <div class="import-sub" id="importSummary"></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">下一步</span></div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+            1. 基础信息已存入 SQLite<br>
+            2. 前往「设置 → 数据源」配置 Tushare Token<br>
+            3. 返回首页点击「立即同步」拉取行情数据<br>
+            4. 日线数据就绪后即可使用分析功能
+          </div>
+        </div>
+        <button class="btn-primary" onclick="showScreen('settings')">前往数据源设置</button>
+        <button class="btn-secondary" onclick="showScreen('main'); renderVersion();">返回首页</button>
+      </div>
+
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ SCREEN: STRATEGY EDITOR ============ -->
+  <div class="screen" id="screen-editor">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('main'); currentMainSub='screener'; renderVersion();">← 策略</button>
+
+      <div class="stock-header">
+        <div class="name-row"><span class="stock-name-lg">策略编辑器</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">可视化搭建你的专属选股策略</div>
+      </div>
+
+      <!-- Strategy Name -->
+      <div class="editor-section">
+        <div class="editor-section-title">策略名称</div>
+        <input type="text" class="factor-select" id="editorStrategyName" placeholder="输入策略名称..." value="我的自定义策略" style="margin-bottom:0;">
+      </div>
+
+      <!-- Logic -->
+      <div class="editor-section">
+        <div class="editor-section-title">条件逻辑</div>
+        <div class="logic-toggle">
+          <button class="logic-btn active" onclick="setEditorLogic(this,'AND')">AND（同时满足）</button>
+          <button class="logic-btn" onclick="setEditorLogic(this,'OR')">OR（任一满足）</button>
+        </div>
+      </div>
+
+      <!-- Factor List -->
+      <div class="editor-section">
+        <div class="editor-section-title">条件因子 (<span id="editorFactorCount">2</span>)</div>
+        <div id="editorFactors">
+          <div class="factor-row" data-factor="ma_position">
+            <button class="remove-btn" onclick="removeEditorFactor(this)">✕</button>
+            <select class="factor-select" onchange="updateFactorType(this)" style="flex:1;">
+              <option value="ma_position" selected>均线排列</option>
+              <option value="macd_cross">MACD 交叉</option>
+              <option value="kdj_signal">KDJ 信号</option>
+              <option value="rsi_range">RSI 区间</option>
+              <option value="vol_break">放量突破</option>
+              <option value="price_break">价格突破</option>
+              <option value="pe_range">市盈率 PE</option>
+              <option value="roe_min">ROE 最低</option>
+              <option value="revenue_growth">营收增速</option>
+            </select>
+            <span style="font-size:11px;color:var(--text-tertiary);white-space:nowrap;">MA5&gt;MA10&gt;MA20</span>
+          </div>
+          <div class="factor-row" data-factor="vol_break">
+            <button class="remove-btn" onclick="removeEditorFactor(this)">✕</button>
+            <select class="factor-select" onchange="updateFactorType(this)" style="flex:1;">
+              <option value="ma_position">均线排列</option>
+              <option value="macd_cross">MACD 交叉</option>
+              <option value="kdj_signal">KDJ 信号</option>
+              <option value="rsi_range">RSI 区间</option>
+              <option value="vol_break" selected>放量突破</option>
+              <option value="price_break">价格突破</option>
+              <option value="pe_range">市盈率 PE</option>
+              <option value="roe_min">ROE 最低</option>
+              <option value="revenue_growth">营收增速</option>
+            </select>
+            <span style="font-size:11px;color:var(--text-tertiary);white-space:nowrap;">量 &gt; 2×均量</span>
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="addEditorFactor()" style="margin-top:4px;">＋ 添加条件因子</button>
+      </div>
+
+      <!-- Preview -->
+      <div class="editor-section">
+        <div class="editor-section-title">策略 DSL 预览</div>
+        <div style="background:var(--card);border-radius:10px;padding:14px;font-size:11px;font-family:monospace;color:var(--text-secondary);line-height:1.6;overflow-x:auto;" id="dslPreview">
+{<br>&nbsp;&nbsp;"logic": "AND",<br>&nbsp;&nbsp;"conditions": [<br>&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"ma_position","params":{"ma_list":[5,10,20]}},<br>&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":20,"m":2.0}}<br>&nbsp;&nbsp;]<br>}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <button class="btn-primary" onclick="saveStrategy()">💾 保存策略</button>
+      <button class="btn-secondary" onclick="runEditorStrategy()">▶ 立即扫描测试</button>
+
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: SEED STRATEGIES ============ -->
+  <div class="screen" id="screen-triple">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('main'); currentMainSub='screener'; renderVersion();">← 选股</button>
+
+      <div class="stock-header">
+        <div class="name-row">
+          <span class="stock-name-lg">种子策略</span>
+          <span class="triple-badge">算法策略</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">三大经典量化算法 — 趋势 · 轮动 · 多因子</div>
+      </div>
+
+      <!-- Strategy 1: 趋势策略 -->
+      <div class="card" style="border-left:3px solid var(--red);">
+        <div class="section-header">
+          <span class="section-label">📐 种子一 · 趋势策略</span>
+          <span class="triple-badge">Trend Following</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+          <strong>算法原理：</strong>基于多周期均线系统 + ADX 趋势强度 + 通道突破，识别处于主升浪的标的。不预测拐点，只跟随趋势。
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">MA5/10/20/60 排列</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">ADX > 25</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">价格 > MA60</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">布林带开口</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">新高突破</span>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--text-tertiary);">全股票池扫描</span>
+          <span style="font-size:16px;font-weight:600;color:var(--red);" onclick="showTrendResults()" id="trendCount">28 只</span>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="showTrendResults()">▶ 查看趋势策略结果</button>
+      </div>
+
+      <!-- Strategy 2: 行业轮动策略 -->
+      <div class="card" style="border-left:3px solid var(--blue);">
+        <div class="section-header">
+          <span class="section-label">🔄 种子二 · 行业轮动策略</span>
+          <span class="triple-badge">Sector Rotation</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+          <strong>算法原理：</strong>按周计算各行业相对强弱 RPS，识别当前领涨行业，在强势行业中优选龙头个股。捕捉板块轮动节奏。
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">行业 RPS 排名</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">板块资金流向</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">行业内龙头筛选</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">月度调仓</span>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-size:10px;color:var(--accent);">当前强势行业：</span>
+            <span style="font-size:11px;color:var(--text);">半导体 · AI算力 · 新能源</span>
+          </div>
+          <span style="font-size:16px;font-weight:600;color:var(--blue);" id="rotationCount">12 只</span>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="showRotationResults()">▶ 查看轮动策略结果</button>
+      </div>
+
+      <!-- Strategy 3: 多因子策略 -->
+      <div class="card" style="border-left:3px solid var(--green);">
+        <div class="section-header">
+          <span class="section-label">🧬 种子三 · 多因子策略</span>
+          <span class="triple-badge">Multi-Factor</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+          <strong>算法原理：</strong>综合估值、质量、成长、动量、波动率五大类因子，加权打分排名。选取综合得分前 10% 的标的。
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">估值因子 (PE/PB/PS)</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">质量因子 (ROE/毛利率)</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">成长因子 (营收/利润增速)</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">动量因子 (6M/12M 收益)</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">波动因子 (低波)</span>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--text-tertiary);">综合排名 Top 10%</span>
+          <span style="font-size:16px;font-weight:600;color:var(--green);" id="multifactorCount">16 只</span>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="showMultifactorResults()">▶ 查看多因子策略结果</button>
+      </div>
+
+      <div style="text-align:center;padding:16px;font-size:11px;color:var(--text-tertiary);line-height:1.6;">
+        三大种子策略独立运行、每日更新<br>扫描范围：120 只 · 更新时间：2026-06-10 18:00<br><br>
+        <span style="font-size:10px;">⚠️ 种子策略为预设算法模板，参数可在策略编辑器中微调</span>
+      </div>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: SEED STRATEGY RESULTS ============ -->
+  <div class="screen" id="screen-seed-results">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('triple')">← 种子策略</button>
+      <div class="stock-header">
+        <div class="name-row"><span class="stock-name-lg" id="seedResultTitle">策略结果</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;" id="seedResultDesc"></div>
+      </div>
+      <div class="section-header"><span class="section-label">匹配标的</span></div>
+      <div class="card" id="seedResultList"></div>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: SCAN ============ -->
+  <div class="screen" id="screen-scan">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('main'); currentMainSub='screener'; renderVersion();">← 策略</button>
+
+      <div class="stock-header">
+        <div class="name-row"><span class="stock-name-lg" id="scanStrategyTitle">选股扫描</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;" id="scanStrategyDesc">正在运行策略...</div>
+      </div>
+
+      <!-- Top N selector -->
+      <div class="section-header"><span class="section-label">🏆 Top N 精选</span></div>
+      <div class="industry-filter-row" id="topNRow">
+        <span class="industry-filter-chip active" onclick="setTopN(this, 5)">Top 5</span>
+        <span class="industry-filter-chip" onclick="setTopN(this, 10)">Top 10</span>
+        <span class="industry-filter-chip" onclick="setTopN(this, 20)">Top 20</span>
+        <span class="industry-filter-chip" onclick="setTopN(this, 50)">Top 50</span>
+        <span class="industry-filter-chip" onclick="setTopN(this, 0)">全部</span>
+      </div>
+
+      <!-- Progress -->
+      <div class="scan-progress" id="scanProgressCard">
+        <div class="scan-spinner" id="scanSpinner"></div>
+        <div style="font-size:15px;font-weight:500;" id="scanStatus">扫描中...</div>
+        <div class="progress-bar" style="margin-top:12px;"><div class="progress-fill" id="scanBar" style="width:0%;transition:width 0.3s;"></div></div>
+        <div class="scan-stats">
+          <span>已扫描 <strong id="scanDone">0</strong>/<span id="scanTotal">120</span></span>
+          <span>匹配 <strong id="scanMatch">0</strong></span>
+          <span>耗时 <strong id="scanTime">0.0s</strong></span>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="section-header" style="margin-top:8px;">
+        <span class="section-label">匹配结果</span>
+        <span style="font-size:11px;color:var(--text-tertiary);" id="topNLabel">Top 10 综合排序</span>
+      </div>
+      <div class="card" id="scanResults">
+        <div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:13px;">扫描进行中...</div>
+      </div>
+
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: PORTFOLIO DETAIL ============ -->
+  <div class="screen" id="screen-portfolio-detail">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('main'); currentMainSub='portfolio'; renderVersion();">← 跟踪</button>
+
+      <div class="portfolio-summary" style="margin-bottom:10px;">
+        <div class="portfolio-total-label">模拟总市值</div>
+        <div class="portfolio-total-value">528,360.50</div>
+        <div class="portfolio-pnl-row">
+          <div class="pnl-item"><div class="pnl-value" style="color:var(--red);">+12,580.20</div><div class="pnl-label">当日盈亏</div></div>
+          <div class="pnl-item"><div class="pnl-value" style="color:var(--red);">+28,360.50</div><div class="pnl-label">累计盈亏</div></div>
+          <div class="pnl-item"><div class="pnl-value">+5.67%</div><div class="pnl-label">累计收益率</div></div>
+        </div>
+      </div>
+
+      <!-- Equity curve -->
+      <div class="card">
+        <div class="section-header"><span class="section-label">📈 收益曲线</span></div>
+        <div class="portfolio-chart-placeholder">
+          <canvas id="equityCanvas" style="width:100%;height:100%;"></canvas>
+        </div>
+      </div>
+
+      <!-- Allocation -->
+      <div class="card">
+        <div class="section-header"><span class="section-label">📊 行业配置</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;width:60px;">食品饮料</span>
+            <div style="flex:1;height:6px;background:var(--separator);border-radius:3px;"><div style="width:63%;height:100%;background:var(--blue);border-radius:3px;"></div></div>
+            <span style="font-size:12px;color:var(--text-secondary);">63%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;width:60px;">电力设备</span>
+            <div style="flex:1;height:6px;background:var(--separator);border-radius:3px;"><div style="width:19%;height:100%;background:var(--accent);border-radius:3px;"></div></div>
+            <span style="font-size:12px;color:var(--text-secondary);">19%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;width:60px;">半导体</span>
+            <div style="flex:1;height:6px;background:var(--separator);border-radius:3px;"><div style="width:18%;height:100%;background:var(--green);border-radius:3px;"></div></div>
+            <span style="font-size:12px;color:var(--text-secondary);">18%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trade log -->
+      <div class="section-header"><span class="section-label">📝 交易记录</span></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--separator);font-size:12px;">
+          <span style="color:var(--green);">买入</span><span>贵州茅台</span><span>200股 @1620</span><span style="color:var(--text-tertiary);">05-15</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--separator);font-size:12px;">
+          <span style="color:var(--red);">买入</span><span>宁德时代</span><span>500股 @205.5</span><span style="color:var(--text-tertiary);">05-20</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;">
+          <span style="color:var(--red);">买入</span><span>中芯国际</span><span>1000股 @88.5</span><span style="color:var(--text-tertiary);">06-01</span>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:16px;font-size:12px;color:var(--text-tertiary);">⚠️ 模拟跟踪 · 仅作分析参考</div>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB BAR ============ -->
+  <div class="tab-bar" id="mainTabBar">
+    <button class="tab-item active" onclick="showScreen('main'); setActiveTab(0);">
+      <span class="tab-icon">◉</span><span class="tab-label">市场</span>
+    </button>
+    <button class="tab-item" id="tabScreener" onclick="showScreen('main'); currentMainSub='screener'; renderVersion(); setActiveTab(1);">
+      <span class="tab-icon">◈</span><span class="tab-label">选股</span>
+    </button>
+    <button class="tab-item" onclick="showStockDetail(); setActiveTab(2);">
+      <span class="tab-icon">◎</span><span class="tab-label">个股</span>
+    </button>
+    <button class="tab-item" id="tabPortfolio" onclick="showScreen('main'); currentMainSub='portfolio'; renderVersion(); setActiveTab(3);">
+      <span class="tab-icon">◉</span><span class="tab-label">跟踪</span>
+    </button>
+  </div>
+
+  <div class="version-badge" id="versionBadge">V2.0</div>
+
+</div><!-- end phone -->
+
+<script>
+// ===== STATE =====
+let currentVersion = 'v20';
+let currentTheme = 'dark';
+let currentMainSub = 'dashboard'; // 'dashboard' | 'screener' | 'portfolio'
+
+// ===== CLOCK =====
+function updateClock() {
+  const now = new Date();
+  document.getElementById('timeDisplay').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// ===== NAVIGATION =====
+function showScreen(name) {
+  ['screen-main','screen-detail','screen-results','screen-settings','screen-import','screen-editor','screen-triple','screen-scan','screen-portfolio-detail','screen-seed-results'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+
+  // Show/hide tab bar
+  const tabBar = document.getElementById('mainTabBar');
+  const hideTabs = ['detail','results','settings','import','editor','triple','scan','portfolio-detail','seed-results'];
+  tabBar.style.display = hideTabs.includes(name) ? 'none' : 'flex';
+
+  if (name === 'main') renderVersion();
+  if (name === 'detail') setTimeout(drawKline, 150);
+  if (name === 'import') initImportScreen();
+  if (name === 'scan') startScanSimulation();
+  if (name === 'portfolio-detail') setTimeout(drawEquityCurve, 200);
+}
+
+function showStockDetail() {
+  showScreen('detail');
+  setActiveTab(2);
+}
+
+function showStrategyResults() {
+  const results = [
+    {name:'蓝英装备',code:'300293',price:'40.26',change:'+5.72%',dir:'up'},
+    {name:'中芯国际',code:'688981',price:'92.36',change:'+5.80%',dir:'up'},
+    {name:'北方华创',code:'002371',price:'285.60',change:'+3.21%',dir:'up'},
+    {name:'韦尔股份',code:'603501',price:'108.50',change:'+2.15%',dir:'up'},
+    {name:'兆易创新',code:'603986',price:'86.30',change:'+1.88%',dir:'up'},
+  ];
+  const html = results.map(s => `
+    <div class="stock-row" onclick="showStockDetail()">
+      <div class="stock-info">
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-code">${s.code}</div>
+      </div>
+      <div>
+        <div class="stock-price">${s.price}</div>
+        <div class="stock-change ${s.dir}">${s.change}</div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('resultList').innerHTML = html;
+  showScreen('results');
+}
+
+function setActiveTab(idx) {
+  document.querySelectorAll('#mainTabBar .tab-item').forEach((t,i) => t.classList.toggle('active', i===idx));
+}
+
+// ===== VERSION CONTROL =====
+document.querySelectorAll('#versionControl .ctrl-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#versionControl .ctrl-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentVersion = this.dataset.version;
+    document.getElementById('versionBadge').textContent = this.textContent.trim();
+    currentMainSub = 'dashboard';
+    setActiveTab(0);
+    showScreen('main');
+  });
+});
+
+// ===== THEME CONTROL =====
+document.querySelectorAll('.theme-dot').forEach(dot => {
+  dot.addEventListener('click', function() {
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    this.classList.add('active');
+    currentTheme = this.dataset.theme;
+    document.body.className = 'theme-' + currentTheme;
+    // Redraw kline if on detail screen
+    if (document.getElementById('screen-detail').classList.contains('active')) {
+      setTimeout(drawKline, 150);
+    }
+  });
+});
+
+// ===== RENDER VERSION =====
+function renderVersion() {
+  const content = document.getElementById('mainContent');
+  const title = document.getElementById('mainTitle');
+  const tabScreener = document.getElementById('tabScreener');
+  const tabPortfolio = document.getElementById('tabPortfolio');
+  const badge = document.getElementById('versionBadge');
+
+  const versionLabels = { v05: 'V0.5', v10: 'V1.0', v15: 'V1.5', v20: 'V2.0' };
+  badge.textContent = versionLabels[currentVersion];
+
+  // Show/hide tabs based on version
+  if (currentVersion === 'v05') {
+    tabScreener.style.display = 'none';
+    tabPortfolio.style.display = 'none';
+  } else if (currentVersion === 'v10') {
+    tabScreener.style.display = 'flex';
+    tabPortfolio.style.display = 'none';
+  } else {
+    tabScreener.style.display = 'flex';
+    tabPortfolio.style.display = 'flex';
+  }
+
+  if (currentMainSub === 'dashboard') {
+    title.textContent = currentVersion === 'v05' ? '数据' : '市场';
+    renderDashboard(content);
+  } else if (currentMainSub === 'screener') {
+    title.textContent = '选股';
+    renderScreener(content);
+  } else if (currentMainSub === 'portfolio') {
+    title.textContent = '跟踪';
+    renderPortfolio(content);
+  }
+}
+
+// ===== DASHBOARD RENDERING PER VERSION =====
+function renderDashboard(container) {
+  let html = '';
+
+  // ---- V0.5: Data Foundation ----
+  if (currentVersion === 'v05') {
+    html = `
+      <div class="fade-in">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <span class="placeholder">搜索已导入的股票...</span>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">📥 数据同步</span></div>
+          <div style="font-size:14px;color:var(--text-secondary);margin-bottom:10px;">Tushare Pro · 已连接</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%;"></div></div>
+          <div style="font-size:12px;color:var(--text-tertiary);text-align:right;margin-top:4px;">120/120 只已完成</div>
+          <div style="margin-top:12px;display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);">
+            <span>日线 ✓</span><span>3 年历史</span><span>最后: 06-10 18:00</span>
+          </div>
+          <div style="margin-top:12px;text-align:center;">
+            <button style="background:var(--blue);color:#fff;border:none;padding:10px 28px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;">立即同步</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">📋 股票池</span><span style="font-size:13px;color:var(--text-secondary);">120 只</span></div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">基础信息来源：行业种子 + 手动添加</div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">贵州茅台</div><div class="stock-code">600519 · 食品饮料 · 种子</div></div><div class="stock-price">1674.00</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">宁德时代</div><div class="stock-code">300750 · 电力设备 · 种子</div></div><div class="stock-price">198.50</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">中芯国际</div><div class="stock-code">688981 · 半导体 · 种子</div></div><div class="stock-price">92.36</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">蓝英装备</div><div class="stock-code">300293 · 专用设备 · 手动</div></div><div class="stock-price">40.26</div></div>
+          <div style="text-align:center;padding-top:10px;display:flex;gap:8px;justify-content:center;">
+            <span style="font-size:13px;color:var(--blue);cursor:pointer;" onclick="showScreen('import')">📥 导入股票</span>
+            <span style="color:var(--separator);">|</span>
+            <span style="font-size:13px;color:var(--text-secondary);cursor:pointer;">+ 手动添加</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">🌱 种子数据说明</span></div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
+            <strong>基础信息种子</strong>（名称/代码/行业）：<br>
+            · 来源于申万行业分类预设数据<br>
+            · 存储在 SQLite stocks 表中<br>
+            · 不包含行情数据<br><br>
+            <strong>行情数据</strong>（OHLCV）：<br>
+            · 通过 Tushare 接口按日拉取<br>
+            · 存储于 daily_quotes 表<br>
+            · 种子仅提供"有哪些股票"，价格由接口更新
+          </div>
+        </div>
+        <div class="empty-state">
+          <div class="icon">🔌</div>
+          <div class="title">V0.5 · 数据基础</div>
+          <div class="desc">当前版本聚焦数据链路：<br>预设种子 → Tushare 数据源配置 → 股票池管理 → 数据拉取与存储。<br>K 线图表与分析功能将在 V1.0 上线。</div>
+        </div>
+        <div class="disclaimer">数据来源：Tushare · SQLite 本地存储<br>仅作分析参考，不构成投资建议</div>
+      </div>`;
+  }
+
+  // ---- V1.0: Charts & Indicators ----
+  else if (currentVersion === 'v10') {
+    html = `
+      <div class="fade-in">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <span class="placeholder">搜索已导入的股票...</span>
+        </div>
+        <div class="index-row">
+          <div class="index-item" onclick="showStockDetail()">
+            <div class="name">上证指数</div>
+            <div class="value" style="color:var(--green)">3280.46</div>
+            <div class="change" style="color:var(--green)">−2.02%</div>
+          </div>
+          <div class="index-item" onclick="showStockDetail()">
+            <div class="name">深证成指</div>
+            <div class="value">10936.83</div>
+            <div class="change" style="color:var(--red)">+0.42%</div>
+          </div>
+          <div class="index-item" onclick="showStockDetail()">
+            <div class="name">创业板指</div>
+            <div class="value">2305.28</div>
+            <div class="change" style="color:var(--red)">+0.58%</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">股票池概览</span><span style="font-size:13px;color:var(--text-secondary);">120 只</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+            <div style="text-align:center;flex:1;"><div style="font-size:24px;font-weight:300;color:var(--red);">78</div><div style="font-size:11px;color:var(--text-tertiary);">上涨</div></div>
+            <div style="text-align:center;flex:1;"><div style="font-size:24px;font-weight:300;color:var(--green);">38</div><div style="font-size:11px;color:var(--text-tertiary);">下跌</div></div>
+            <div style="text-align:center;flex:1;"><div style="font-size:24px;font-weight:300;color:var(--text-tertiary);">4</div><div style="font-size:11px;color:var(--text-tertiary);">平盘</div></div>
+          </div>
+          <div style="display:flex;gap:6px;height:28px;align-items:flex-end;">
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:65%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:85%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:40%;"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:30%;"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:20%;"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:35%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:55%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:70%;"></div>
+          </div>
+        </div>
+        <div class="section-header"><span class="section-label">分类概览</span></div>
+        <div class="card">
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🔵 科技</div><div class="stock-code">32 只</div></div><div class="stock-change up">+2.1%</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🟢 消费</div><div class="stock-code">28 只</div></div><div class="stock-change down">−0.8%</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🟡 金融</div><div class="stock-code">18 只</div></div><div class="stock-change up">+1.2%</div></div>
+        </div>
+        <div class="section-header"><span class="section-label">今日强势</span></div>
+        <div class="card">
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">蓝英装备</div><div class="stock-code">300293</div></div><div><div class="stock-price">40.26</div><div class="stock-change up">+5.72%</div></div></div>
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">中芯国际</div><div class="stock-code">688981</div></div><div><div class="stock-price">92.36</div><div class="stock-change up">+5.80%</div></div></div>
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">宁德时代</div><div class="stock-code">300750</div></div><div><div class="stock-price">198.50</div><div class="stock-change down">−1.52%</div></div></div>
+        </div>
+        <div class="section-header"><span class="section-label">🧠 选股策略</span><span style="font-size:12px;color:var(--text-secondary);cursor:pointer;" onclick="currentMainSub='screener';showScreen('main');renderVersion();setActiveTab(1);">查看全部 →</span></div>
+        <div class="card">
+          <div class="strategy-card running" onclick="showStrategyResults()" style="margin-bottom:6px;">
+            <div class="strategy-name">均线多头排列</div>
+            <div class="strategy-desc">MA5>MA10>MA20，股价站稳 MA60</div>
+            <div class="strategy-meta"><span class="match-count">28 只匹配</span></div>
+          </div>
+          <div class="strategy-card" onclick="showStrategyResults()" style="margin-bottom:6px;">
+            <div class="strategy-name">MACD 零轴金叉</div>
+            <div class="strategy-desc">DIF 上穿 DEA + DIF>0 + 放量</div>
+            <div class="strategy-meta"><span class="match-count">15 只匹配</span></div>
+          </div>
+        </div>
+        <div class="empty-state" style="padding:16px;">
+          <div class="icon">📊</div>
+          <div class="title">V1.0 · 图表分析</div>
+          <div class="desc">K 线图表 + 技术指标 + 基础选股策略已上线。<br>自定义策略编辑器将在 V1.5 推出。</div>
+        </div>
+        <div class="disclaimer">数据来源：Tushare · SQLite 本地存储<br>仅作分析参考，不构成投资建议</div>
+      </div>`;
+  }
+
+  // ---- V1.5: Screener ----
+  else if (currentVersion === 'v15') {
+    html = `
+      <div class="fade-in">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <span class="placeholder">搜索已导入的股票...</span>
+        </div>
+        <div class="index-row">
+          <div class="index-item" onclick="showStockDetail()"><div class="name">上证指数</div><div class="value" style="color:var(--green)">3280.46</div><div class="change" style="color:var(--green)">−2.02%</div></div>
+          <div class="index-item" onclick="showStockDetail()"><div class="name">深证成指</div><div class="value">10936.83</div><div class="change" style="color:var(--red)">+0.42%</div></div>
+          <div class="index-item" onclick="showStockDetail()"><div class="name">创业板指</div><div class="value">2305.28</div><div class="change" style="color:var(--red)">+0.58%</div></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">股票池概览</span><span style="font-size:13px;color:var(--text-secondary);">120 只</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <div style="text-align:center;flex:1;"><div style="font-size:22px;font-weight:300;color:var(--red);">78</div><div style="font-size:11px;color:var(--text-tertiary);">上涨</div></div>
+            <div style="text-align:center;flex:1;"><div style="font-size:22px;font-weight:300;color:var(--green);">38</div><div style="font-size:11px;color:var(--text-tertiary);">下跌</div></div>
+            <div style="text-align:center;flex:1;"><div style="font-size:22px;font-weight:300;color:var(--text-tertiary);">4</div><div style="font-size:11px;color:var(--text-tertiary);">平盘</div></div>
+          </div>
+        </div>
+        <div class="section-header"><span class="section-label">今日强势</span></div>
+        <div class="card">
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">蓝英装备</div><div class="stock-code">300293</div></div><div><div class="stock-price">40.26</div><div class="stock-change up">+5.72%</div></div></div>
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">中芯国际</div><div class="stock-code">688981</div></div><div><div class="stock-price">92.36</div><div class="stock-change up">+5.80%</div></div></div>
+        </div>
+        <div class="section-header"><span class="section-label">🧠 选股策略</span><span style="font-size:12px;color:var(--text-secondary);cursor:pointer;" onclick="currentMainSub='screener';showScreen('main');renderVersion();setActiveTab(1);">查看全部 →</span></div>
+        <div class="card">
+          <div class="strategy-card running" onclick="showStrategyResults()" style="margin-bottom:6px;">
+            <div class="strategy-name">均线多头排列</div>
+            <div class="strategy-desc">MA5>MA10>MA20，股价站稳 MA60</div>
+            <div class="strategy-meta"><span class="match-count">28 只匹配</span></div>
+          </div>
+          <div class="strategy-card" onclick="showStrategyResults()" style="margin-bottom:6px;">
+            <div class="strategy-name">MACD 零轴金叉</div>
+            <div class="strategy-desc">DIF 上穿 DEA + DIF>0 + 放量</div>
+            <div class="strategy-meta"><span class="match-count">15 只匹配</span></div>
+          </div>
+        </div>
+        <div class="empty-state" style="padding:16px;">
+          <div class="icon">🧠</div>
+          <div class="title">V1.5 · 量化选股</div>
+          <div class="desc">选股策略引擎 + 模拟持仓已上线！<br>点击底部「选股」Tab 体验三大种子策略：<br>趋势策略 · 行业轮动 · 多因子。<br>点击「跟踪」Tab 管理模拟持仓。</div>
+        </div>
+        <div class="disclaimer">数据来源：Tushare · SQLite 本地存储<br>仅作分析参考，不构成投资建议</div>
+      </div>`;
+  }
+
+  // ---- V2.0: Complete ----
+  else if (currentVersion === 'v20') {
+    html = `
+      <div class="fade-in">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <span class="placeholder">搜索已导入的股票...</span>
+        </div>
+        <div class="index-row">
+          <div class="index-item" onclick="showStockDetail()"><div class="name">上证指数</div><div class="value" style="color:var(--green)">3280.46</div><div class="change" style="color:var(--green)">−2.02%</div></div>
+          <div class="index-item" onclick="showStockDetail()"><div class="name">深证成指</div><div class="value">10936.83</div><div class="change" style="color:var(--red)">+0.42%</div></div>
+          <div class="index-item" onclick="showStockDetail()"><div class="name">创业板指</div><div class="value">2305.28</div><div class="change" style="color:var(--red)">+0.58%</div></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-label">股票池概览</span><span style="font-size:13px;color:var(--text-secondary);">120 只</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+            <div style="text-align:center;flex:1;"><div style="font-size:24px;font-weight:300;color:var(--red);">78</div><div style="font-size:11px;color:var(--text-tertiary);">上涨</div></div>
+            <div style="text-align:center;flex:1;"><div style="font-size:24px;font-weight:300;color:var(--green);">38</div><div style="font-size:11px;color:var(--text-tertiary);">下跌</div></div>
+            <div style="text-align:center;flex:1;"><div style="font-size:24px;font-weight:300;color:var(--text-tertiary);">4</div><div style="font-size:11px;color:var(--text-tertiary);">平盘</div></div>
+          </div>
+          <div style="display:flex;gap:6px;height:28px;align-items:flex-end;">
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:65%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:85%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:40%;"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:30%;"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:20%;"></div>
+            <div style="flex:1;background:var(--green);border-radius:3px 3px 0 0;height:35%;"></div>
+            <div style="flex:1;background:var(--red);border-radius:3px 3px 0 0;height:55%;"></div>
+          </div>
+        </div>
+        <div class="section-header"><span class="section-label">分类概览</span></div>
+        <div class="card">
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🔵 科技</div><div class="stock-code">32 只</div></div><div class="stock-change up">+2.1%</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🟢 消费</div><div class="stock-code">28 只</div></div><div class="stock-change down">−0.8%</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🟡 金融</div><div class="stock-code">18 只</div></div><div class="stock-change up">+1.2%</div></div>
+          <div class="stock-row"><div class="stock-info"><div class="stock-name">🟣 医药</div><div class="stock-code">24 只</div></div><div class="stock-change down">−0.3%</div></div>
+        </div>
+        <div class="section-header"><span class="section-label">今日强势</span></div>
+        <div class="card">
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">蓝英装备</div><div class="stock-code">300293</div></div><div><div class="stock-price">40.26</div><div class="stock-change up">+5.72%</div></div></div>
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">中芯国际</div><div class="stock-code">688981</div></div><div><div class="stock-price">92.36</div><div class="stock-change up">+5.80%</div></div></div>
+          <div class="stock-row" onclick="showStockDetail()"><div class="stock-info"><div class="stock-name">宁德时代</div><div class="stock-code">300750</div></div><div><div class="stock-price">198.50</div><div class="stock-change down">−1.52%</div></div></div>
+        </div>
+        <div class="section-header"><span class="section-label">🧠 选股策略</span><span style="font-size:12px;color:var(--text-secondary);cursor:pointer;" onclick="currentMainSub='screener';showScreen('main');renderVersion();setActiveTab(1);">查看全部 →</span></div>
+        <div class="card">
+          <div class="strategy-card running" onclick="showStrategyResults()" style="margin-bottom:6px;">
+            <div class="strategy-name">均线多头排列</div>
+            <div class="strategy-desc">MA5>MA10>MA20，股价站稳 MA60 上方</div>
+            <div class="strategy-meta"><span class="match-count">28 只匹配</span></div>
+          </div>
+          <div class="strategy-card" onclick="showStrategyResults()" style="margin-bottom:6px;">
+            <div class="strategy-name">MACD 零轴金叉</div>
+            <div class="strategy-desc">DIF 上穿 DEA + DIF>0 + 量比>1.5</div>
+            <div class="strategy-meta"><span class="match-count">15 只匹配</span></div>
+          </div>
+          <div class="strategy-card" onclick="showStrategyResults()" style="margin-bottom:0;">
+            <div class="strategy-name">低估值成长股</div>
+            <div class="strategy-desc">PE<25 · ROE>15% · 营收增速>20%</div>
+            <div class="strategy-meta"><span class="match-count">11 只匹配</span></div>
+          </div>
+        </div>
+        <div class="disclaimer">数据来源：Tushare · SQLite 本地存储<br>仅作分析参考，不构成投资建议</div>
+      </div>`;
+  }
+
+  container.innerHTML = html + '<div style="height:20px;"></div>';
+}
+
+// ===== SCREENER RENDERING =====
+let screenerFilter = 'all'; // 'all' | 'technical' | 'fundamental' | 'custom'
+let industryFilter = 'all'; // 'all' | specific industry name
+
+const industryList = ['全部','半导体','食品饮料','电力设备','医药生物','银行','汽车','计算机','有色金属'];
+
+const allStrategies = [
+  { id:'s1', name:'均线多头排列', desc:'日线 MA5 > MA10 > MA20，且股价站稳 MA60 上方', cat:'technical', tag:'趋势跟踪', count:28 },
+  { id:'s2', name:'MACD 零轴金叉', desc:'DIF 上穿 DEA，DIF > 0，且成交量放大至 1.5 倍', cat:'technical', tag:'动量突破', count:15 },
+  { id:'s3', name:'放量突破前高', desc:'股价突破 60 日最高价，成交量 > 20 日均量 2 倍', cat:'technical', tag:'突破策略', count:6 },
+  { id:'s4', name:'KDJ 超卖反弹', desc:'K < 20 且 D < 20，K 线上穿 D 线，超卖区金叉', cat:'technical', tag:'反转信号', count:9 },
+  { id:'s5', name:'布林带收口突破', desc:'布林带宽度收缩至 20 日最低，价格突破上轨', cat:'technical', tag:'突破策略', count:4 },
+  { id:'f1', name:'低估值成长股', desc:'PE < 25 · ROE > 15% · 营收同比增长 > 20%', cat:'fundamental', tag:'价值成长', count:11 },
+  { id:'f2', name:'高股息红利', desc:'股息率 > 3% · 连续 3 年分红 · PE < 15', cat:'fundamental', tag:'红利策略', count:18 },
+  { id:'f3', name:'盈利质量优选', desc:'ROE > 20% · 毛利率 > 30% · 经营现金流为正', cat:'fundamental', tag:'质量因子', count:14 },
+  { id:'f4', name:'低估值反转', desc:'PE 处于历史 20% 分位以下 · PB < 1.5 · 市值 > 100 亿', cat:'fundamental', tag:'价值反转', count:7 },
+  { id:'c1', name:'我的均线+量能', desc:'MA5>MA10>MA20 AND 成交量>1.8倍均量', cat:'custom', tag:'自定义', count:22 },
+  { id:'c2', name:'科技龙头筛选', desc:'行业=半导体/计算机 AND ROE>12% AND PE<40', cat:'custom', tag:'自定义', count:8 },
+];
+
+function renderScreener(container) {
+  if (currentVersion === 'v05') {
+    container.innerHTML = `<div class="empty-state fade-in" style="padding-top:60px;"><div class="icon">🔒</div><div class="title">V0.5 暂未开放</div><div class="desc">选股策略功能将在 V1.0 版本推出。<br>当前版本聚焦于数据基础设施建设。</div></div>`;
+    return;
+  }
+
+  const filtered = screenerFilter === 'all'
+    ? allStrategies
+    : allStrategies.filter(s => s.cat === screenerFilter);
+
+  const catCounts = {
+    all: allStrategies.length,
+    technical: allStrategies.filter(s => s.cat === 'technical').length,
+    fundamental: allStrategies.filter(s => s.cat === 'fundamental').length,
+    custom: allStrategies.filter(s => s.cat === 'custom').length,
+  };
+
+  const isActive = (cat) => screenerFilter === cat ? ' active' : '';
+
+  container.innerHTML = `
+    <div class="fade-in">
+      <!-- Strategy Category Tabs -->
+      <div class="tags">
+        <button class="tag${isActive('all')}" onclick="setScreenerFilter('all')">全部 (${catCounts.all})</button>
+        <button class="tag${isActive('technical')}" onclick="setScreenerFilter('technical')">技术面 (${catCounts.technical})</button>
+        <button class="tag${isActive('fundamental')}" onclick="setScreenerFilter('fundamental')">基本面 (${catCounts.fundamental})</button>
+        <button class="tag${isActive('custom')}" onclick="setScreenerFilter('custom')">自定义 (${catCounts.custom})</button>
+      </div>
+
+      <!-- Industry Filter -->
+      <div class="section-header"><span class="section-label">🏭 行业筛选</span></div>
+      <div class="industry-filter-row">
+        ${industryList.map(ind => `
+          <span class="industry-filter-chip${industryFilter === ind ? ' active' : ''}" onclick="setIndustryFilter('${ind}')">${ind}</span>
+        `).join('')}
+      </div>
+
+      <!-- 种子策略 Card -->
+      <div class="strategy-card running" onclick="showScreen('triple')" style="border:1.5px solid rgba(255,159,10,0.5);background:linear-gradient(135deg, rgba(255,69,58,0.04), rgba(10,132,255,0.04), rgba(48,209,88,0.04));">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <span class="triple-badge">种子策略</span>
+          <span class="strategy-name" style="margin-bottom:0;">三大算法策略</span>
+        </div>
+        <div class="strategy-desc">趋势策略 · 行业轮动 · 多因子 — 三大经典量化算法</div>
+        <div class="strategy-meta">
+          <span style="font-size:12px;color:var(--text-tertiary);">算法驱动 · 每日更新</span>
+          <span class="match-count" style="color:var(--accent);">56 只</span>
+        </div>
+      </div>
+
+      <!-- Scan Button -->
+      <button class="btn-primary" onclick="showScreen('scan')" style="margin-bottom:16px;">
+        ▶ 开始扫描选股 (${catCounts.all} 策略 × ${industryFilter === 'all' ? '全行业' : industryFilter})
+      </button>
+
+      <!-- Strategy Cards -->
+      <div class="section-header">
+        <span class="section-label">${screenerFilter === 'all' ? '全部策略' : screenerFilter === 'technical' ? '技术面策略' : screenerFilter === 'fundamental' ? '基本面策略' : '自定义策略'}</span>
+        <span style="font-size:12px;color:var(--text-tertiary);">${filtered.length} 个策略</span>
+      </div>
+      ${filtered.map(s => `
+        <div class="strategy-card${s.cat === 'custom' ? '' : ' running'}" onclick="showStrategyResults()">
+          <div class="strategy-name">${s.name}${s.cat === 'custom' ? ' ⚙️' : ''}</div>
+          <div class="strategy-desc">${s.desc}</div>
+          <div class="strategy-meta">
+            <span style="font-size:12px;color:var(--text-tertiary);">${s.cat === 'technical' ? '技术面' : s.cat === 'fundamental' ? '基本面' : '自定义'} · ${s.tag}</span>
+            <span class="match-count">${s.count} 只匹配</span>
+          </div>
+        </div>
+      `).join('')}
+      ${filtered.length === 0 ? `<div class="empty-state" style="padding:30px;"><div class="icon">📭</div><div class="title">暂无策略</div><div class="desc">点击下方按钮创建你的第一个自定义策略</div></div>` : ''}
+      <div class="strategy-card" onclick="showScreen('editor')" style="border:1px dashed var(--separator);">
+        <div class="strategy-name" style="color:var(--blue);">＋ 创建自定义策略</div>
+        <div class="strategy-desc">可视化组合条件因子，构建你的专属选股策略。支持技术面、基本面因子自由搭配。</div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>`;
+}
+
+function setScreenerFilter(cat) {
+  screenerFilter = cat;
+  const content = document.getElementById('mainContent');
+  renderScreener(content);
+}
+
+function setIndustryFilter(ind) {
+  industryFilter = ind;
+  const content = document.getElementById('mainContent');
+  renderScreener(content);
+}
+
+// ===== SEED STRATEGY RESULTS (with Top N ranking) =====
+function renderRankedStocks(stocks) {
+  return stocks.map((s, i) => `
+    <div class="stock-row" onclick="showStockDetail()">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;font-weight:700;color:${i < 3 ? 'var(--accent)' : 'var(--text-tertiary)'};width:18px;">${i+1}</span>
+        <div class="stock-info">
+          <div class="stock-name">${s.name}</div>
+          <div class="stock-code">${s.code} · ${s.ind}</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(255,159,10,0.15);color:var(--accent);">${s.score}</span>
+          <div>
+            <div class="stock-price">${s.price}</div>
+            <div class="stock-change ${s.dir}">${s.change}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showTrendResults() {
+  document.getElementById('seedResultTitle').textContent = '趋势策略 · Top 10';
+  document.getElementById('seedResultDesc').textContent = '多周期均线 + ADX + 通道突破 · 综合评分排序';
+  document.getElementById('seedResultList').innerHTML = renderRankedStocks([
+    {name:'蓝英装备',code:'300293',ind:'专用设备',price:'40.26',change:'+5.72%',dir:'up',score:96},
+    {name:'中芯国际',code:'688981',ind:'半导体',price:'92.36',change:'+5.80%',dir:'up',score:94},
+    {name:'北方华创',code:'002371',ind:'半导体',price:'285.60',change:'+3.21%',dir:'up',score:89},
+    {name:'韦尔股份',code:'603501',ind:'半导体',price:'108.50',change:'+2.15%',dir:'up',score:85},
+    {name:'兆易创新',code:'603986',ind:'半导体',price:'86.30',change:'+1.88%',dir:'up',score:81},
+    {name:'宁德时代',code:'300750',ind:'电力设备',price:'198.50',change:'-1.52%',dir:'down',score:76},
+    {name:'卓胜微',code:'300782',ind:'半导体',price:'128.60',change:'-0.30%',dir:'down',score:72},
+    {name:'比亚迪',code:'002594',ind:'汽车',price:'268.50',change:'+2.80%',dir:'up',score:68},
+  ]);
+  showScreen('seed-results');
+}
+
+function showRotationResults() {
+  document.getElementById('seedResultTitle').textContent = '行业轮动策略 · Top 10';
+  document.getElementById('seedResultDesc').textContent = '行业 RPS 排名 → 行业内龙头 · 综合评分排序';
+  document.getElementById('seedResultList').innerHTML = renderRankedStocks([
+    {name:'中芯国际',code:'688981',ind:'半导体',price:'92.36',change:'+5.80%',dir:'up',score:97},
+    {name:'北方华创',code:'002371',ind:'半导体',price:'285.60',change:'+3.21%',dir:'up',score:93},
+    {name:'阳光电源',code:'300274',ind:'电力设备',price:'118.20',change:'+4.15%',dir:'up',score:90},
+    {name:'比亚迪',code:'002594',ind:'汽车',price:'268.50',change:'+2.80%',dir:'up',score:87},
+    {name:'金山办公',code:'688111',ind:'计算机',price:'198.30',change:'+1.95%',dir:'up',score:83},
+    {name:'韦尔股份',code:'603501',ind:'半导体',price:'108.50',change:'+2.15%',dir:'up',score:79},
+    {name:'兆易创新',code:'603986',ind:'半导体',price:'86.30',change:'+1.88%',dir:'up',score:75},
+    {name:'立讯精密',code:'002475',ind:'电子',price:'35.80',change:'+0.90%',dir:'up',score:71},
+  ]);
+  showScreen('seed-results');
+}
+
+function showMultifactorResults() {
+  document.getElementById('seedResultTitle').textContent = '多因子策略 · Top 10';
+  document.getElementById('seedResultDesc').textContent = '五大类因子加权打分 · 综合排名排序';
+  document.getElementById('seedResultList').innerHTML = renderRankedStocks([
+    {name:'贵州茅台',code:'600519',ind:'食品饮料',price:'1674.00',change:'+3.21%',dir:'up',score:99},
+    {name:'招商银行',code:'600036',ind:'银行',price:'38.50',change:'+1.05%',dir:'up',score:95},
+    {name:'药明康德',code:'603259',ind:'医药生物',price:'62.30',change:'+3.80%',dir:'up',score:92},
+    {name:'比亚迪',code:'002594',ind:'汽车',price:'268.50',change:'+2.80%',dir:'up',score:88},
+    {name:'海天味业',code:'603288',ind:'食品饮料',price:'82.60',change:'+1.50%',dir:'up',score:85},
+    {name:'紫金矿业',code:'601899',ind:'有色金属',price:'18.20',change:'+0.85%',dir:'up',score:81},
+    {name:'恒瑞医药',code:'600276',ind:'医药生物',price:'48.20',change:'+0.55%',dir:'up',score:77},
+    {name:'立讯精密',code:'002475',ind:'电子',price:'35.80',change:'+0.90%',dir:'up',score:73},
+  ]);
+  showScreen('seed-results');
+}
+
+// ===== SCAN SIMULATION =====
+let scanTimer = null;
+let scanTopN = 10;
+
+function setTopN(chip, n) {
+  scanTopN = n;
+  chip.parentElement.querySelectorAll('.industry-filter-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  document.getElementById('topNLabel').textContent = n === 0 ? '全部结果' : 'Top ' + n + ' 综合排序';
+  // Re-render if scan complete
+  if (!scanTimer) renderScanResults();
+}
+
+const allScanResults = [
+  {name:'中芯国际',code:'688981',ind:'半导体',price:'92.36',change:'+5.80%',dir:'up',score:98},
+  {name:'蓝英装备',code:'300293',ind:'专用设备',price:'40.26',change:'+5.72%',dir:'up',score:95},
+  {name:'北方华创',code:'002371',ind:'半导体',price:'285.60',change:'+3.21%',dir:'up',score:91},
+  {name:'阳光电源',code:'300274',ind:'电力设备',price:'118.20',change:'+4.15%',dir:'up',score:88},
+  {name:'比亚迪',code:'002594',ind:'汽车',price:'268.50',change:'+2.80%',dir:'up',score:85},
+  {name:'韦尔股份',code:'603501',ind:'半导体',price:'108.50',change:'+2.15%',dir:'up',score:82},
+  {name:'兆易创新',code:'603986',ind:'半导体',price:'86.30',change:'+1.88%',dir:'up',score:79},
+  {name:'药明康德',code:'603259',ind:'医药生物',price:'62.30',change:'+3.80%',dir:'up',score:76},
+  {name:'金山办公',code:'688111',ind:'计算机',price:'198.30',change:'+1.95%',dir:'up',score:73},
+  {name:'紫金矿业',code:'601899',ind:'有色金属',price:'18.20',change:'+0.85%',dir:'up',score:70},
+  {name:'宁德时代',code:'300750',ind:'电力设备',price:'198.50',change:'-1.52%',dir:'down',score:68},
+  {name:'招商银行',code:'600036',ind:'银行',price:'38.50',change:'+1.05%',dir:'up',score:65},
+  {name:'立讯精密',code:'002475',ind:'电子',price:'35.80',change:'+0.90%',dir:'up',score:62},
+  {name:'恒瑞医药',code:'600276',ind:'医药生物',price:'48.20',change:'+0.55%',dir:'up',score:58},
+  {name:'卓胜微',code:'300782',ind:'半导体',price:'128.60',change:'-0.30%',dir:'down',score:55},
+];
+
+function renderScanResults() {
+  let results = [...allScanResults];
+  if (scanTopN > 0) results = results.slice(0, scanTopN);
+  document.getElementById('scanResults').innerHTML = results.map((s, i) => `
+    <div class="stock-row" onclick="showStockDetail()">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;font-weight:700;color:var(--text-tertiary);width:18px;">${i+1}</span>
+        <div class="stock-info">
+          <div class="stock-name">${s.name}</div>
+          <div class="stock-code">${s.code} · ${s.ind}</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(255,159,10,0.15);color:var(--accent);">${s.score}</span>
+          <div>
+            <div class="stock-price">${s.price}</div>
+            <div class="stock-change ${s.dir}">${s.change}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function startScanSimulation() {
+  const total = 120;
+  let done = 0;
+  let match = 0;
+  const startTime = Date.now();
+
+  document.getElementById('scanTotal').textContent = total;
+  document.getElementById('scanDone').textContent = '0';
+  document.getElementById('scanMatch').textContent = '0';
+  document.getElementById('scanTime').textContent = '0.0s';
+  document.getElementById('scanBar').style.width = '0%';
+  document.getElementById('scanStatus').textContent = '扫描中...';
+  document.getElementById('scanSpinner').style.display = 'block';
+  document.getElementById('scanResults').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:13px;">扫描进行中...</div>';
+  document.getElementById('topNLabel').textContent = 'Top ' + scanTopN + ' 综合排序';
+
+  if (scanTimer) clearInterval(scanTimer);
+
+  scanTimer = setInterval(() => {
+    done += Math.floor(Math.random() * 8) + 3;
+    if (done > total) done = total;
+    match = Math.floor(done * 0.08);
+    const elapsed = (Date.now() - startTime) / 1000;
+
+    document.getElementById('scanDone').textContent = done;
+    document.getElementById('scanMatch').textContent = match;
+    document.getElementById('scanTime').textContent = elapsed.toFixed(1) + 's';
+    document.getElementById('scanBar').style.width = (done / total * 100) + '%';
+
+    if (done >= total) {
+      clearInterval(scanTimer);
+      scanTimer = null;
+      document.getElementById('scanStatus').textContent = '扫描完成 ✓';
+      document.getElementById('scanSpinner').style.display = 'none';
+      renderScanResults();
+    }
+  }, 200);
+}
+function renderPortfolio(container) {
+  if (currentVersion === 'v05' || currentVersion === 'v10') {
+    container.innerHTML = `<div class="empty-state fade-in" style="padding-top:60px;"><div class="icon">🔒</div><div class="title">即将推出</div><div class="desc">模拟持仓跟踪功能将在 V1.5 版本推出。<br>届时可手动录入持仓、计算盈亏、查看收益曲线。</div></div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="fade-in">
+      <div class="portfolio-summary">
+        <div class="portfolio-total-label">模拟总市值</div>
+        <div class="portfolio-total-value">528,360.50</div>
+        <div class="portfolio-pnl-row">
+          <div class="pnl-item"><div class="pnl-value" style="color:var(--red);">+12,580.20</div><div class="pnl-label">当日盈亏</div></div>
+          <div class="pnl-item"><div class="pnl-value" style="color:var(--red);">+28,360.50</div><div class="pnl-label">累计盈亏</div></div>
+          <div class="pnl-item"><div class="pnl-value">76.3%</div><div class="pnl-label">仓位比例</div></div>
+        </div>
+      </div>
+      <div class="section-header"><span class="section-label">当前持仓</span></div>
+      <div class="card">
+        <div class="stock-row">
+          <div class="stock-info"><div class="stock-name">贵州茅台</div><div class="stock-code">200 股 · 成本 1,620.00</div></div>
+          <div><div class="stock-price">1,674.00</div><div class="stock-change up">+3.21%</div></div>
+        </div>
+        <div class="stock-row">
+          <div class="stock-info"><div class="stock-name">宁德时代</div><div class="stock-code">500 股 · 成本 205.50</div></div>
+          <div><div class="stock-price">198.50</div><div class="stock-change down">−1.52%</div></div>
+        </div>
+        <div class="stock-row">
+          <div class="stock-info"><div class="stock-name">中芯国际</div><div class="stock-code">1000 股 · 成本 88.50</div></div>
+          <div><div class="stock-price">92.36</div><div class="stock-change up">+5.80%</div></div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:12px;">
+        <button class="btn-primary" style="width:auto;display:inline-block;padding:10px 32px;" onclick="showScreen('portfolio-detail')">📊 查看详细分析</button>
+      </div>
+      <div style="text-align:center;padding:0 0 16px;font-size:12px;color:var(--text-tertiary);">模拟跟踪 · 仅作分析参考</div>
+      <div style="height:20px;"></div>
+    </div>`;
+}
+
+// ===== PERIOD SWITCH =====
+function switchPeriod(btn) {
+  btn.parentElement.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawKline();
+}
+
+// ===== INDICATOR SWITCH =====
+function switchIndicator(btn) {
+  btn.parentElement.querySelectorAll('.indicator-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== STRATEGY EDITOR =====
+let editorLogic = 'AND';
+let editorFactorIdx = 2;
+
+function setEditorLogic(btn, logic) {
+  editorLogic = logic;
+  btn.parentElement.querySelectorAll('.logic-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateDSLPreview();
+}
+
+const factorParams = {
+  ma_position: { label:'均线排列', hint:'MA5>MA10>MA20', snippet:'{"factor":"ma_position","params":{"ma_list":[5,10,20]}}' },
+  macd_cross: { label:'MACD 交叉', hint:'DIF 上穿 DEA', snippet:'{"factor":"macd_cross","params":{"position":"above_zero"}}' },
+  kdj_signal: { label:'KDJ 信号', hint:'K<20 超卖金叉', snippet:'{"factor":"kdj_signal","params":{"k_max":20,"d_max":20}}' },
+  rsi_range: { label:'RSI 区间', hint:'30 < RSI < 70', snippet:'{"factor":"rsi_range","params":{"min":30,"max":70}}' },
+  vol_break: { label:'放量突破', hint:'量 > 2×20日均量', snippet:'{"factor":"vol_break","params":{"n":20,"m":2.0}}' },
+  price_break: { label:'价格突破', hint:'突破 60 日高点', snippet:'{"factor":"price_break","params":{"n":60,"direction":"high"}}' },
+  pe_range: { label:'市盈率 PE', hint:'0 < PE < 25', snippet:'{"factor":"pe_range","params":{"min":0,"max":25}}' },
+  roe_min: { label:'ROE 最低', hint:'ROE > 15%', snippet:'{"factor":"roe_min","params":{"min":15}}' },
+  revenue_growth: { label:'营收增速', hint:'同比增长 > 20%', snippet:'{"factor":"revenue_growth","params":{"min_growth":20}}' },
+};
+
+function updateFactorType(select) {
+  const row = select.closest('.factor-row');
+  const factor = select.value;
+  const info = factorParams[factor];
+  if (info) {
+    row.setAttribute('data-factor', factor);
+    row.querySelector('span:last-child').textContent = info.hint;
+  }
+  updateDSLPreview();
+}
+
+function removeEditorFactor(btn) {
+  const factors = document.getElementById('editorFactors');
+  if (factors.querySelectorAll('.factor-row').length <= 1) {
+    showToast('至少保留一个条件因子');
+    return;
+  }
+  btn.closest('.factor-row').remove();
+  updateFactorCount();
+  updateDSLPreview();
+}
+
+function addEditorFactor() {
+  editorFactorIdx++;
+  const factors = document.getElementById('editorFactors');
+  const row = document.createElement('div');
+  row.className = 'factor-row';
+  row.setAttribute('data-factor', 'ma_position');
+  row.innerHTML = `
+    <button class="remove-btn" onclick="removeEditorFactor(this)">✕</button>
+    <select class="factor-select" onchange="updateFactorType(this)" style="flex:1;">
+      <option value="ma_position" selected>均线排列</option>
+      <option value="macd_cross">MACD 交叉</option>
+      <option value="kdj_signal">KDJ 信号</option>
+      <option value="rsi_range">RSI 区间</option>
+      <option value="vol_break">放量突破</option>
+      <option value="price_break">价格突破</option>
+      <option value="pe_range">市盈率 PE</option>
+      <option value="roe_min">ROE 最低</option>
+      <option value="revenue_growth">营收增速</option>
+    </select>
+    <span style="font-size:11px;color:var(--text-tertiary);white-space:nowrap;">MA5>MA10>MA20</span>
+  `;
+  factors.appendChild(row);
+  updateFactorCount();
+  updateDSLPreview();
+}
+
+function updateFactorCount() {
+  const count = document.getElementById('editorFactors').querySelectorAll('.factor-row').length;
+  document.getElementById('editorFactorCount').textContent = count;
+}
+
+function updateDSLPreview() {
+  const rows = document.getElementById('editorFactors').querySelectorAll('.factor-row');
+  const conditions = [];
+  rows.forEach(row => {
+    const factor = row.getAttribute('data-factor');
+    if (factor && factorParams[factor]) {
+      conditions.push(factorParams[factor].snippet);
+    }
+  });
+  const dsl = `{\n  "logic": "${editorLogic}",\n  "conditions": [\n    ${conditions.join(',\n    ')}\n  ]\n}`;
+  document.getElementById('dslPreview').textContent = dsl;
+}
+
+function saveStrategy() {
+  const name = document.getElementById('editorStrategyName').value || '未命名策略';
+  const cat = 'custom';
+  const count = Math.floor(Math.random() * 20) + 3;
+  // Add to allStrategies
+  const newId = 'c' + (allStrategies.filter(s => s.cat === 'custom').length + 1);
+  allStrategies.push({
+    id: newId, name: name,
+    desc: editorLogic === 'AND' ? '多条件同时满足' : '任一条件满足',
+    cat: 'custom', tag: '自定义', count: count
+  });
+  showToast('策略「' + name + '」已保存！');
+  setTimeout(() => {
+    showScreen('main');
+    currentMainSub = 'screener';
+    screenerFilter = 'custom';
+    renderVersion();
+    setActiveTab(1);
+  }, 800);
+}
+
+function runEditorStrategy() {
+  const count = Math.floor(Math.random() * 15) + 2;
+  showToast('扫描完成，匹配 ' + count + ' 只');
+}
+
+// ===== OLD filterTag - keep for dashboard tags =====
+function filterTag(btn) {
+  btn.parentElement.querySelectorAll('.tag').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== MINUTE CYCLE =====
+const minutePeriods = ['未启用','5 分钟','15 分钟','30 分钟','60 分钟'];
+let minuteIdx = 0;
+function cycleMinute() {
+  minuteIdx = (minuteIdx + 1) % minutePeriods.length;
+  document.getElementById('minuteVal').textContent = minutePeriods[minuteIdx];
+}
+
+// ===== HISTORY YEARS CYCLE =====
+const historyYearOptions = ['1 年','2 年','3 年'];
+let historyYearIdx = 2; // default 3 years
+function cycleHistoryYears() {
+  historyYearIdx = (historyYearIdx + 1) % historyYearOptions.length;
+  document.getElementById('historyYears').textContent = historyYearOptions[historyYearIdx];
+}
+
+// ===== EQUITY CURVE =====
+function drawEquityCurve() {
+  const canvas = document.getElementById('equityCanvas');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = container.clientWidth * dpr;
+  canvas.height = container.clientHeight * dpr;
+  canvas.style.width = container.clientWidth + 'px';
+  canvas.style.height = container.clientHeight + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  // Simulate equity curve
+  const points = [];
+  let val = 500000;
+  for (let i = 0; i < 90; i++) {
+    val += (Math.random() - 0.47) * 8000;
+    points.push(val);
+  }
+  const maxV = Math.max(...points);
+  const minV = Math.min(...points);
+  const range = maxV - minV || 1;
+  const sx = (i) => 10 + (W - 20) * i / (points.length - 1);
+  const sy = (v) => H - 10 - (H - 40) * (v - minV) / range;
+
+  // Fill area
+  ctx.beginPath();
+  ctx.moveTo(sx(0), H - 10);
+  points.forEach((v, i) => ctx.lineTo(sx(i), sy(v)));
+  ctx.lineTo(sx(points.length - 1), H - 10);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(10,132,255,0.2)');
+  grad.addColorStop(1, 'rgba(10,132,255,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.strokeStyle = '#0a84ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach((v, i) => i === 0 ? ctx.moveTo(sx(i), sy(v)) : ctx.lineTo(sx(i), sy(v)));
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#636366';
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(maxV.toLocaleString(), 10, 16);
+  ctx.textAlign = 'right';
+  ctx.fillText(minV.toLocaleString(), W - 10, H - 6);
+}
+
+// ===== K-LINE DRAWING =====
+function drawKline() {
+  const canvas = document.getElementById('klineCanvas');
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = container.clientWidth * dpr;
+  canvas.height = container.clientHeight * dpr;
+  canvas.style.width = container.clientWidth + 'px';
+  canvas.style.height = container.clientHeight + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  const computed = getComputedStyle(document.body);
+  const red = computed.getPropertyValue('--red').trim() || '#ff453a';
+  const green = computed.getPropertyValue('--green').trim() || '#30d158';
+  const blue = computed.getPropertyValue('--blue').trim() || '#0a84ff';
+  const accent = computed.getPropertyValue('--accent').trim() || '#ff9f0a';
+  const textTertiary = computed.getPropertyValue('--text-tertiary').trim() || '#636366';
+
+  const count = 50;
+  const candles = [];
+  let price = 36 + Math.random() * 4;
+  for (let i = 0; i < count; i++) {
+    const change = (Math.random() - 0.48) * 1.2;
+    const open = price;
+    const close = price + change;
+    const high = Math.max(open, close) + Math.random() * 0.8;
+    const low = Math.min(open, close) - Math.random() * 0.8;
+    candles.push({ open, high, low, close });
+    price = close;
+  }
+
+  const padding = { top: 20, right: 32, bottom: 30, left: 6 };
+  const chartW = W - padding.left - padding.right;
+  const chartH = H - padding.top - padding.bottom;
+  const allPrices = candles.flatMap(c => [c.high, c.low]);
+  const maxP = Math.max(...allPrices);
+  const minP = Math.min(...allPrices);
+  const range = maxP - minP || 1;
+  const scaleY = (v) => padding.top + chartH * (1 - (v - minP) / range);
+  const candleW = Math.max(2, chartW / count * 0.65);
+  const gap = chartW / count;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(128,128,128,0.08)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (chartH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(W - padding.right, y);
+    ctx.stroke();
+    const priceAt = maxP - (range / 4) * i;
+    ctx.fillStyle = textTertiary;
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(priceAt.toFixed(1), W - 2, y + 4);
+  }
+
+  // MA20
+  const ma20pts = [];
+  for (let i = 19; i < candles.length; i++) {
+    let sum = 0;
+    for (let j = i - 19; j <= i; j++) sum += candles[j].close;
+    ma20pts.push({ x: padding.left + gap * i + gap / 2, y: scaleY(sum / 20) });
+  }
+  ctx.strokeStyle = accent;
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ma20pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // MA5
+  const ma5pts = [];
+  for (let i = 4; i < candles.length; i++) {
+    let sum = 0;
+    for (let j = i - 4; j <= i; j++) sum += candles[j].close;
+    ma5pts.push({ x: padding.left + gap * i + gap / 2, y: scaleY(sum / 5) });
+  }
+  ctx.strokeStyle = blue;
+  ctx.globalAlpha = 0.7;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ma5pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Candlesticks
+  candles.forEach((c, i) => {
+    const x = padding.left + gap * i + gap / 2;
+    const isUp = c.close >= c.open;
+    ctx.strokeStyle = isUp ? red : green;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, scaleY(c.high));
+    ctx.lineTo(x, scaleY(c.low));
+    ctx.stroke();
+
+    const bodyTop = scaleY(isUp ? c.close : c.open);
+    const bodyBottom = scaleY(isUp ? c.open : c.close);
+    const bodyH = Math.max(1, bodyBottom - bodyTop);
+    ctx.fillStyle = isUp ? red : green;
+    ctx.fillRect(x - candleW / 2, bodyTop, candleW, bodyH);
+  });
+
+  // Buy/Sell markers
+  // B marker at candle index 8 (KDJ golden cross)
+  const bIdx1 = 8, bIdx2 = 35;
+  const sIdx1 = 42;
+
+  function drawBSMarker(idx, color, label) {
+    const cx = padding.left + gap * idx + gap / 2;
+    const cy = scaleY(candles[idx].low) + 16;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, cx, cy);
+  }
+
+  drawBSMarker(bIdx1, red, 'B');
+  drawBSMarker(bIdx2, red, 'B');
+  drawBSMarker(sIdx1, green, 'S');
+
+  // Support/Resistance lines
+  const support1 = scaleY(37.88), support2 = scaleY(36.20);
+  const resist1 = scaleY(42.80);
+
+  [support1, support2].forEach(y => {
+    ctx.strokeStyle = blue;
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(W - padding.right, y);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = accent;
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 6]);
+  ctx.beginPath();
+  ctx.moveTo(padding.left, resist1);
+  ctx.lineTo(W - padding.right, resist1);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+}
+
+// ===== IMPORT LOGIC =====
+let importMethod = null;
+let selectedIndustries = new Set();
+let manualAddedStocks = [];
+let csvParsedStocks = [];
+let allIndustriesSelected = false;
+
+const industrySeeds = [
+  { name: '半导体', stocks: 18, samples: ['中芯国际','北方华创','韦尔股份','兆易创新','卓胜微'] },
+  { name: '食品饮料', stocks: 22, samples: ['贵州茅台','五粮液','伊利股份','海天味业','泸州老窖'] },
+  { name: '电力设备', stocks: 16, samples: ['宁德时代','隆基绿能','阳光电源','通威股份','亿纬锂能'] },
+  { name: '医药生物', stocks: 24, samples: ['药明康德','恒瑞医药','迈瑞医疗','爱尔眼科','智飞生物'] },
+  { name: '银行', stocks: 14, samples: ['招商银行','工商银行','建设银行','兴业银行','平安银行'] },
+  { name: '汽车', stocks: 12, samples: ['比亚迪','长城汽车','长安汽车','上汽集团','广汽集团'] },
+  { name: '计算机', stocks: 20, samples: ['金山办公','用友网络','恒生电子','广联达','深信服'] },
+  { name: '房地产', stocks: 10, samples: ['万科A','保利发展','招商蛇口','金地集团','华润置地'] },
+  { name: '有色金属', stocks: 13, samples: ['紫金矿业','洛阳钼业','北方稀土','中国铝业','赣锋锂业'] },
+];
+
+const manualSearchDB = [
+  { code:'600519', name:'贵州茅台', industry:'食品饮料' },
+  { code:'300750', name:'宁德时代', industry:'电力设备' },
+  { code:'688981', name:'中芯国际', industry:'半导体' },
+  { code:'300293', name:'蓝英装备', industry:'专用设备' },
+  { code:'002371', name:'北方华创', industry:'半导体' },
+  { code:'603501', name:'韦尔股份', industry:'半导体' },
+  { code:'600036', name:'招商银行', industry:'银行' },
+  { code:'002594', name:'比亚迪', industry:'汽车' },
+  { code:'603259', name:'药明康德', industry:'医药生物' },
+  { code:'601899', name:'紫金矿业', industry:'有色金属' },
+  { code:'603986', name:'兆易创新', industry:'半导体' },
+  { code:'300274', name:'阳光电源', industry:'电力设备' },
+  { code:'002475', name:'立讯精密', industry:'电子' },
+  { code:'600276', name:'恒瑞医药', industry:'医药生物' },
+];
+
+function initImportScreen() {
+  importMethod = null;
+  selectedIndustries = new Set();
+  manualAddedStocks = [];
+  csvParsedStocks = [];
+  allIndustriesSelected = false;
+
+  // Reset UI
+  document.querySelectorAll('#screen-import .import-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#screen-import .import-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('importStep1').classList.add('active');
+  document.getElementById('csvConfirmBtn').style.display = 'none';
+  document.getElementById('csvPreview').innerHTML = '';
+  document.getElementById('manualSearchResults').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:13px;">输入代码或名称开始搜索</div>';
+  document.getElementById('manualAddedChips').innerHTML = '';
+  document.getElementById('manualAddedCount').textContent = '0';
+  document.getElementById('seedCount').textContent = '0';
+  document.getElementById('seedPreview').innerHTML = '';
+
+  // Build industry grid
+  let gridHTML = '';
+  industrySeeds.forEach(ind => {
+    gridHTML += `<div class="industry-chip" data-industry="${ind.name}" onclick="toggleIndustry(this)">${ind.name}<span class="count">${ind.stocks} 只</span></div>`;
+  });
+  document.getElementById('industryGrid').innerHTML = gridHTML;
+}
+
+function selectImportMethod(method) {
+  importMethod = method;
+  document.querySelectorAll('#screen-import .import-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('importCard' + method.charAt(0).toUpperCase() + method.slice(1)).classList.add('selected');
+  document.querySelectorAll('#screen-import .import-step').forEach(s => s.classList.remove('active'));
+
+  if (method === 'seed') {
+    document.getElementById('importStepSeed').classList.add('active');
+    updateSeedPreview();
+  } else if (method === 'manual') {
+    document.getElementById('importStepManual').classList.add('active');
+  } else if (method === 'csv') {
+    document.getElementById('importStepCsv').classList.add('active');
+  }
+}
+
+function goBackImportStep() {
+  importMethod = null;
+  selectedIndustries = new Set();
+  manualAddedStocks = [];
+  csvParsedStocks = [];
+  document.querySelectorAll('#screen-import .import-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#screen-import .import-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('importStep1').classList.add('active');
+  document.getElementById('csvConfirmBtn').style.display = 'none';
+  document.getElementById('csvPreview').innerHTML = '';
+  document.getElementById('seedCount').textContent = '0';
+  document.getElementById('seedPreview').innerHTML = '';
+  document.getElementById('manualAddedChips').innerHTML = '';
+  document.getElementById('manualAddedCount').textContent = '0';
+  document.getElementById('manualSearchResults').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:13px;">输入代码或名称开始搜索</div>';
+  document.querySelectorAll('.industry-chip').forEach(c => c.classList.remove('selected'));
+}
+
+function toggleIndustry(chip) {
+  const name = chip.dataset.industry;
+  if (chip.classList.contains('selected')) {
+    chip.classList.remove('selected');
+    selectedIndustries.delete(name);
+  } else {
+    chip.classList.add('selected');
+    selectedIndustries.add(name);
+  }
+  allIndustriesSelected = selectedIndustries.size === industrySeeds.length;
+  updateSeedPreview();
+}
+
+function toggleAllIndustries() {
+  if (allIndustriesSelected) {
+    document.querySelectorAll('.industry-chip').forEach(c => c.classList.remove('selected'));
+    selectedIndustries.clear();
+    allIndustriesSelected = false;
+  } else {
+    document.querySelectorAll('.industry-chip').forEach(c => c.classList.add('selected'));
+    industrySeeds.forEach(ind => selectedIndustries.add(ind.name));
+    allIndustriesSelected = true;
+  }
+  updateSeedPreview();
+}
+
+function updateSeedPreview() {
+  let total = 0;
+  let samples = [];
+  selectedIndustries.forEach(name => {
+    const ind = industrySeeds.find(i => i.name === name);
+    if (ind) {
+      total += ind.stocks;
+      samples = samples.concat(ind.samples.slice(0, 2));
+    }
+  });
+  document.getElementById('seedCount').textContent = total;
+
+  if (samples.length > 0) {
+    let previewHTML = '<div class="section-header" style="margin-top:12px;"><span class="section-label">预览 (部分)</span></div>';
+    previewHTML += '<table class="preview-table"><thead><tr><th>名称</th><th>行业</th><th>来源</th></tr></thead><tbody>';
+    samples.slice(0, 8).forEach(s => {
+      const ind = industrySeeds.find(i => i.samples.includes(s));
+      previewHTML += `<tr><td>${s}</td><td>${ind ? ind.name : '-'}</td><td style="color:var(--green);">种子</td></tr>`;
+    });
+    if (total > 8) previewHTML += `<tr><td colspan="3" style="text-align:center;color:var(--text-tertiary);">... 还有 ${total - 8} 只</td></tr>`;
+    previewHTML += '</tbody></table>';
+    document.getElementById('seedPreview').innerHTML = previewHTML;
+  } else {
+    document.getElementById('seedPreview').innerHTML = '';
+  }
+}
+
+function confirmSeedImport() {
+  if (selectedIndustries.size === 0) {
+    showToast('请至少选择一个行业');
+    return;
+  }
+  let total = 0;
+  selectedIndustries.forEach(name => {
+    const ind = industrySeeds.find(i => i.name === name);
+    if (ind) total += ind.stocks;
+  });
+  document.getElementById('importSummary').textContent = `已从 ${selectedIndustries.size} 个行业导入 ${total} 只股票的基础信息`;
+  document.querySelectorAll('#screen-import .import-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('importStepComplete').classList.add('active');
+}
+
+// simulateManualSearch — called when manual search bar is clicked
+function simulateManualSearch() {
+  const results = manualSearchDB.slice(0, 8);
+  let html = '';
+  results.forEach(s => {
+    const alreadyAdded = manualAddedStocks.find(a => a.code === s.code);
+    html += `<div class="stock-row" onclick="addManualStock('${s.code}','${s.name}','${s.industry}')" style="${alreadyAdded ? 'opacity:0.4;pointer-events:none;' : ''}">
+      <div class="stock-info">
+        <div class="stock-name">${s.name} ${alreadyAdded ? '(已添加)' : ''}</div>
+        <div class="stock-code">${s.code} · ${s.industry}</div>
+      </div>
+      <span style="color:var(--blue);font-size:13px;">${alreadyAdded ? '✓' : '+ 添加'}</span>
+    </div>`;
+  });
+  document.getElementById('manualSearchResults').innerHTML = html;
+}
+
+function addManualStock(code, name, industry) {
+  if (manualAddedStocks.find(s => s.code === code)) return;
+  manualAddedStocks.push({ code, name, industry });
+  updateManualUI();
+}
+
+function updateManualUI() {
+  document.getElementById('manualAddedCount').textContent = manualAddedStocks.length;
+  let chipsHTML = '';
+  manualAddedStocks.forEach((s, i) => {
+    chipsHTML += `<span class="stock-chip">${s.name} (${s.code})<span class="remove" onclick="event.stopPropagation(); removeManualStock(${i})">✕</span></span>`;
+  });
+  document.getElementById('manualAddedChips').innerHTML = chipsHTML || '<span style="font-size:12px;color:var(--text-tertiary);">尚未添加</span>';
+  simulateManualSearch();
+}
+
+function removeManualStock(idx) {
+  manualAddedStocks.splice(idx, 1);
+  updateManualUI();
+}
+
+function confirmManualImport() {
+  if (manualAddedStocks.length === 0) {
+    showToast('请至少添加一只股票');
+    return;
+  }
+  document.getElementById('importSummary').textContent = `已手动添加 ${manualAddedStocks.length} 只股票`;
+  document.querySelectorAll('#screen-import .import-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('importStepComplete').classList.add('active');
+}
+
+function simulateCsvImport() {
+  csvParsedStocks = [
+    { code:'600519', name:'贵州茅台', industry:'食品饮料' },
+    { code:'000858', name:'五粮液', industry:'食品饮料' },
+    { code:'002594', name:'比亚迪', industry:'汽车' },
+    { code:'300750', name:'宁德时代', industry:'电力设备' },
+    { code:'688981', name:'中芯国际', industry:'半导体' },
+  ];
+  let previewHTML = '<div class="section-header" style="margin-top:8px;"><span class="section-label">解析结果</span></div>';
+  previewHTML += '<table class="preview-table"><thead><tr><th>代码</th><th>名称</th><th>行业</th></tr></thead><tbody>';
+  csvParsedStocks.forEach(s => {
+    previewHTML += `<tr><td>${s.code}</td><td>${s.name}</td><td>${s.industry || '-'}</td></tr>`;
+  });
+  previewHTML += '</tbody></table>';
+  previewHTML += `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">成功解析 ${csvParsedStocks.length} 只股票</div>`;
+  document.getElementById('csvPreview').innerHTML = previewHTML;
+  document.getElementById('csvConfirmBtn').style.display = 'block';
+}
+
+function confirmCsvImport() {
+  document.getElementById('importSummary').textContent = `已从 CSV 导入 ${csvParsedStocks.length} 只股票`;
+  document.querySelectorAll('#screen-import .import-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('importStepComplete').classList.add('active');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// Override search click in manual step
+document.addEventListener('click', function(e) {
+  if (e.target.closest('#importStepManual .search-bar') && document.getElementById('importStepManual').classList.contains('active')) {
+    simulateManualSearch();
+  }
+});
+
+// ===== INIT =====
+renderVersion();
+</script>
+
+</body>
+</html>
