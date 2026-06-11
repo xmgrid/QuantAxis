@@ -1,8 +1,8 @@
-# Agent E · 持仓管理 + 买卖点分析
+# Agent E · 持仓管理 + 买卖点分析 + Vibe 2.0 信号集成
 
-> **依赖**：Agent A (QuoteDao), Agent B (IndicatorCalc, KlinePainter), Agent C (StrategyRunner)  
+> **依赖**：Agent A (QuoteDao), Agent B (IndicatorCalc, KlinePainter), Agent C (StrategyRunner, VibeEngine)  
 > **输出给**：Agent G  
-> **工期**：1.5 周
+> **工期**：2 周（+0.5 周 Vibe 信号集成）
 
 ---
 
@@ -234,4 +234,44 @@ class BSMarkerGenerator {
     // resist1 = max(近期高点, BOLL上轨)
   }
 }
+
+---
+
+### E5. Vibe 2.0 信号集成
+
+**文件**：`lib/widgets/vibe_signal_card.dart`
+
+在 BS 分析卡片中新增 Vibe 2.0 信号区块：
+
+```dart
+class VibeSignalCard extends StatelessWidget {
+  final String tsCode;
+  final VibeStockDetail? vibeDetail;  // 来自 VibeEngine 的评分数据
+}
+```
+
+**展示内容**：
+1. **Vibe 综合评分**（大号数字 + 评级标签：强/中/弱）
+2. **趋势状态**：是否通过趋势策略（✓/✗）+ 均线排列状态
+3. **轮动状态**：是否为行业龙头（✓/✗）+ ret_20 排名
+4. **因子评分明细**：ret_20、波动率、综合分三栏
+5. **七条件通过情况**（7 个 ✓/✗ 标签）
+6. **「在 Vibe 管线中查看」按钮** → 跳转 Vibe 完整分析结果页
+
+**持仓扫描模式**（Vibe 2.0 特有）：
+```dart
+// 扫描模式选择"我的持仓"时，VibeEngine 仅对持仓股运行
+final config = VibeConfig.defaults().copyWith(
+  global: GlobalConfig(scanMode: '持仓'),
+);
+final result = await VibeEngine(config).runPipeline(
+  tsCodes: holdings.map((h) => h.tsCode).toList(),
+);
+```
+
+**验收**：
+- [ ] Vibe 综合评分卡片正确显示在 BS 分析区块中
+- [ ] 趋势/轮动/因子 三个状态标签正确
+- [ ] 七条件通过情况可视化（7个 ✓/✗ 标签）
+- [ ] 持仓扫描模式仅对持仓股运行，不扫全市场
 ```

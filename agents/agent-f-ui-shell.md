@@ -1,8 +1,8 @@
-# Agent F · UI 框架与导航
+# Agent F · UI 框架 + 导航 + Vibe 2.0 参数配置
 
-> **依赖**：Agent A（ConfigDao）  
-> **输出给**：所有 Agent（提供 ThemeConfig, 导航框架, 通用组件）  
-> **工期**：1.5 周
+> **依赖**：Agent A（ConfigDao, StrategyDao）, Agent C（VibeEngine, VibeConfig）  
+> **输出给**：所有 Agent（提供 ThemeConfig, 导航框架, 通用组件, Vibe参数配置UI）  
+> **工期**：2 周（+0.5 周 Vibe 参数配置UI）
 
 ---
 
@@ -240,3 +240,60 @@ enum ImportMethod { seed, manual, csv }
 **验收**：
 - [ ] 所有组件支持深色/浅色主题
 - [ ] Toast 不阻塞交互
+
+---
+
+### F7. Vibe 2.0 参数配置页面
+
+**文件**：`lib/screens/vibe_params_screen.dart`
+
+用户克隆种子策略后进入的完整参数编辑页面（参考原型 `screen-params`）：
+
+```dart
+class VibeParamsScreen extends StatefulWidget {
+  final int strategyId;       // 策略ID（种子副本或已有自定义）
+  final bool isSeedTemplate;  // true=从种子克隆, false=编辑已有自定义
+}
+```
+
+**页面结构**（自上而下）：
+1. 顶部返回按钮 + 策略名称输入框
+2. **📐 趋势策略参数组**（可折叠）：
+   - MA快/MA慢周期 — Stepper（−/数值/+）
+   - 短期回看天数 — Stepper
+   - 最少数据天数 — Stepper
+   - 三个条件 Toggle（close>MA / MA快>MA慢 / 短期动量）
+3. **🔄 行业轮动参数组**（可折叠）：
+   - 动量周期 — Stepper
+   - 最低收益门槛(%) — Slider
+   - 每行业上限 — Stepper
+4. **🧬 多因子评分参数组**（可折叠）：
+   - 基准分 — Slider (0–100)
+   - 动量权重 — Slider (0–5.0, 步长0.1)
+   - 波动惩罚 — Slider (0–5.0, 步长0.1)
+   - Top N — Stepper
+5. **🔍 七条件过滤参数组**（可折叠）：
+   - 严格/宽松模式 SegmentedControl 切换
+   - 两组阈值（切换时联动显示）：
+     - 10日涨幅最低(%) — Slider
+     - 量比最低 — Slider
+     - 涨幅下限/上限(%) — 双 Slider
+6. **📊 采样预估**：参数变更后轻量采样，显示预计匹配数
+7. **操作按钮**：💾 保存策略 / ▶ 采样测试 / 取消
+
+**参数控件规范**：
+
+| 参数类型 | 控件 | 示例 |
+|---------|------|------|
+| 整数型 (范围大) | Slider + 数值标签 | MA周期 (5–250, 步长5) |
+| 整数型 (范围小) | Stepper (−/N/+) | Top N (5–100) |
+| 浮点型 | Slider + 1位小数标签 | 权重系数 (0–5.0, 步长0.1) |
+| 布尔型 | Toggle Switch | 条件开关 |
+| 枚举型 | SegmentedControl | 严格/宽松模式 |
+
+**验收**：
+- [ ] 所有参数控件可交互，值实时更新
+- [ ] 严格/宽松切换时七条件阈值联动显示
+- [ ] 采样预估匹配数在参数变更后刷新
+- [ ] 保存后 StrategyDao.update() 写入 config_json
+- [ ] 从种子克隆时 isSeedTemplate=true，保存时 source_strategy_id 指向原种子

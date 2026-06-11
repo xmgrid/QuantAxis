@@ -322,6 +322,8 @@
     <a href="#s6">页面原型</a>
     <a href="#s7">功能详情</a>
     <a href="#s8">量化分析引擎</a>
+    <a href="#s8b">Vibe 2.0 内置算法</a>
+    <a href="#s8c">可配置参数体系</a>
     <a href="#s9">数据库设计</a>
     <a href="#s10">技术选型</a>
     <a href="#s11">版本路线</a>
@@ -1043,9 +1045,10 @@
 </div>
 
 <!-- ======== 8. 量化分析引擎 ======== -->
+<!-- ======== 8. 量化分析引擎 ======== -->
 <div class="section" id="s8">
   <div class="section-title"><span class="icon">🧠</span> 八、本地量化分析引擎设计</div>
-  <div class="section-desc">运行在手机端的策略计算核心</div>
+  <div class="section-desc">运行在手机端的策略计算核心 — 支持条件因子评估 + 内置 Vibe 2.0 算法管线</div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;">
     <div class="overview-card">
@@ -1054,19 +1057,20 @@
       <ul>
         <li><strong>策略 DSL</strong>：JSON 格式定义条件树，前端可视化编辑，后端高效解析</li>
         <li><strong>扫描流程</strong>：加载策略 → 遍历股票池 → 读取 SQLite 行情 → 逐条件计算 → 输出匹配结果</li>
-        <li><strong>后台执行</strong>：计算放在后台线程（Dart Isolate / RN 原生线程），不阻塞 UI</li>
-        <li><strong>分批处理</strong>：每批 20 只股票，处理完一批立即更新 UI 进度</li>
+        <li><strong>内置算法管线</strong>：Vibe 2.0 三策略 + 交集 + 七条件过滤，支持严格/宽松双模式</li>
+        <li><strong>后台执行</strong>：计算放在后台线程（Dart Isolate），不阻塞 UI，分批更新进度</li>
       </ul>
     </div>
     <div class="overview-card">
       <h3>📐 技术面因子库</h3>
       <span class="en">Technical Factors</span>
       <ul>
-        <li>趋势类：MA 排列/交叉/距离、MACD 信号/背离</li>
+        <li>趋势类：MA 排列/交叉/距离、MACD 信号/背离、ADX 趋势强度</li>
         <li>震荡类：KDJ 超买超卖、RSI 强弱、WR 威廉</li>
         <li>通道类：布林带收口/扩张/突破</li>
-        <li>量价类：量比、放量/缩量、量价配合度</li>
+        <li>量价类：量比、放量/缩量、量价配合度、资金流向</li>
         <li>突破类：N 日新高/新低、箱体突破</li>
+        <li>复合类：N 日收益率、涨跌幅区间、收盘价 vs MA 比较</li>
         <li>所有指标本地计算，不依赖外部 API</li>
       </ul>
     </div>
@@ -1086,27 +1090,27 @@
       <h3>🧪 策略 DSL 示例</h3>
       <span class="en">Strategy DSL</span>
       <div style="background:#12141c;border-radius:8px;padding:14px;font-size:10px;font-family:'SF Mono',monospace;overflow-x:auto;line-height:1.7;">
-        {<br>
-        &nbsp;&nbsp;"name": "均线多头+放量突破",<br>
-        &nbsp;&nbsp;"logic": "AND",<br>
-        &nbsp;&nbsp;"enabled": true,<br>
-        &nbsp;&nbsp;"conditions": [<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"factor": "ma_position",<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"params": {<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ma_list": [5,10,20,60],<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"relation": "bullish_align"<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;},<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"logic": "OR",<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"conditions": [<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":20,"m":2.0}},<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":60,"m":1.5}}<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
-        &nbsp;&nbsp;]<br>
-        }
+{<br>
+&nbsp;&nbsp;"name": "均线多头+放量突破",<br>
+&nbsp;&nbsp;"logic": "AND",<br>
+&nbsp;&nbsp;"enabled": true,<br>
+&nbsp;&nbsp;"conditions": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"factor": "ma_position",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"params": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ma_list": [5,10,20,60],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"relation": "bullish_align"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"logic": "OR",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"conditions": [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":20,"m":2.0}},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"factor":"vol_break","params":{"n":60,"m":1.5}}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;]<br>
+}
       </div>
     </div>
   </div>
@@ -1117,25 +1121,524 @@
       <thead><tr><th>场景</th><th>数据量</th><th>预估耗时</th><th>策略</th></tr></thead>
       <tbody>
         <tr><td>单只股票日线指标计算</td><td>5年日线 (~1200 条)</td><td>&lt; 5ms</td><td>直接计算，无需优化</td></tr>
-        <tr><td>日线 → 周线/月线本地合成</td><td>1200 条日线 → 250 周线</td><td>&lt; 2ms/只</td><td>SQL 聚合或 Dart 循环重采样，无需额外 API 调用</td></tr>
-        <tr><td>分钟线指标计算</td><td>1年60分线 (~50,000 条)</td><td>~20-50ms/只</td><td>仅用户配置后才拉取和计算，默认关闭</td></tr>
-        <tr><td>扫描 100 只股票 × 日线策略</td><td>100 × 1200 条</td><td>~2-5 秒</td><td>多线程分批 + 进度条 UI</td></tr>
+        <tr><td>Vibe 三策略并行扫描 (200只)</td><td>200 × 1200 条</td><td>~3-8 秒</td><td>三策略共用一次数据遍历，避免重复 I/O</td></tr>
+        <tr><td>七条件过滤器</td><td>精选结果 (~5-30 只)</td><td>&lt; 50ms</td><td>仅对交集结果逐条件验真，成本极低</td></tr>
         <tr><td>单策略回测 (100只 × 5年日线)</td><td>100 × 1200 条</td><td>~3-8 秒</td><td>后台 Isolate 执行，分批计算</td></tr>
         <tr><td>多策略并行扫描 (5策略 × 200只)</td><td>5 × 200 × 1200 条</td><td>~10-30 秒</td><td>用户设置分析数量上限，默认提示 200 只以内</td></tr>
       </tbody>
     </table>
-    <div style="margin-top:12px;padding:12px;background:#12141c;border-radius:8px;font-size:13px;color:var(--text-secondary);">
-      <strong>💡 周线/月线本地合成策略：</strong>优先从日线数据聚合生成（按周/月 OHLC），仅当用户明确需要原始交易所周线/月线时才单独拉取。此策略可减少 40-60% 的 API 调用量和存储空间。
+  </div>
+</div>
+
+<!-- ======== 8b. Vibe 2.0 内置算法 ======== -->
+<div class="section" id="s8b">
+  <div class="section-title"><span class="icon">📊</span> 九、Vibe 2.0 内置算法详解</div>
+  <div class="section-desc">来自 Vibe 量化 v2.0 参考实现的五大核心算法模块，作为系统内置种子策略</div>
+
+  <!-- 算法总览 -->
+  <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px;">
+    <h4 style="margin-bottom: 16px;">📐 算法流水线</h4>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;font-size:13px;">
+      <div style="background:#12141c;border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;">
+        <div style="font-size:18px;">📐</div>
+        <strong>趋势策略</strong>
+        <div style="font-size:10px;color:var(--text-secondary);">均线多头+动量</div>
+      </div>
+      <span style="color:var(--accent);font-size:18px;">→</span>
+      <div style="background:#12141c;border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;">
+        <div style="font-size:18px;">🔄</div>
+        <strong>行业轮动</strong>
+        <div style="font-size:10px;color:var(--text-secondary);">行业内龙头挑选</div>
+      </div>
+      <span style="color:var(--accent);font-size:18px;">→</span>
+      <div style="background:#12141c;border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;">
+        <div style="font-size:18px;">🧬</div>
+        <strong>多因子评分</strong>
+        <div style="font-size:10px;color:var(--text-secondary);">收益/波动综合打分</div>
+      </div>
+      <span style="color:var(--red);font-size:18px;">→</span>
+      <div style="background:rgba(245,158,11,0.1);border:2px solid var(--accent);border-radius:8px;padding:10px 16px;text-align:center;">
+        <div style="font-size:18px;">⭐</div>
+        <strong>三策略精选</strong>
+        <div style="font-size:10px;color:var(--accent);">交集 = 最强信号</div>
+      </div>
+      <span style="color:var(--red);font-size:18px;">→</span>
+      <div style="background:rgba(239,68,68,0.1);border:2px solid var(--red);border-radius:8px;padding:10px 16px;text-align:center;">
+        <div style="font-size:18px;">🔍</div>
+        <strong>七条件过滤</strong>
+        <div style="font-size:10px;color:var(--red);">严格/宽松双模式</div>
+      </div>
     </div>
-    <div style="margin-top:8px;padding:12px;background:#12141c;border-radius:8px;font-size:13px;color:var(--text-secondary);">
-      <strong>💡 分钟线按需拉取：</strong>分钟线数据量约为日线的 40 倍（1 年 60 分线≈5 万条），默认不拉取。用户可在设置中按周期粒度（5/15/30/60 分钟）选择性开启，系统会给出存储空间预估提示。
+    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-secondary);">
+      三策略独立计算 → 取交集 → 精选结果 → 叠加七条件 → 最终输出
+    </div>
+  </div>
+
+  <!-- 算法一：趋势策略 -->
+  <div class="diff-card" style="border-left: 4px solid var(--blue); margin-bottom: 20px;">
+    <h3 style="color: var(--blue);">📐 算法一 · 趋势策略 (Trend Following)</h3>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.8;">
+      <p><strong>核心思想：</strong>基于双均线系统判断中期上升趋势，三重条件确认多头排列 + 短期动量。</p>
+
+      <h4 style="color:var(--text);margin-top:16px;">判断条件（AND 逻辑）</h4>
+      <table class="feature-table" style="font-size:13px;">
+        <thead><tr><th>#</th><th>条件</th><th>公式</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td>①</td><td><strong>价格站上 MA20</strong></td><td><code>close > MA(close, 20)</code></td><td>短期强势，价格在 20 日均线之上</td></tr>
+          <tr><td>②</td><td><strong>MA20 在 MA60 之上</strong></td><td><code>MA(close, 20) > MA(close, 60)</code></td><td>短期均线高于长期均线，均线多头排列</td></tr>
+          <tr><td>③</td><td><strong>短期动量向上</strong></td><td><code>close > close[5天前]</code></td><td>当前价高于 5 日前，价格持续走高</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="color:var(--text);margin-top:16px;">前置条件</h4>
+      <p>个股至少需要 <strong>60 个交易日</strong>数据（由 MA60 窗口决定）。</p>
+
+      <h4 style="color:var(--text);margin-top:16px;">理论背景</h4>
+      <p>经典双均线交叉系统（Golden Cross）变体。MA20 上穿 MA60 通常被视为中期看多信号，加上价格持续走高，三重确认有效突破，排除假突破。</p>
+    </div>
+  </div>
+
+  <!-- 算法二：行业轮动 -->
+  <div class="diff-card" style="border-left: 4px solid var(--accent); margin-bottom: 20px;">
+    <h3 style="color: var(--accent);">🔄 算法二 · 行业轮动 (Sector Rotation)</h3>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.8;">
+      <p><strong>核心思想：</strong>在每个行业中选出 20 日动量最强的龙头股，实现"选对行业 + 选对龙头"的自上而下筛选。</p>
+
+      <h4 style="color:var(--text);margin-top:16px;">算法逻辑</h4>
+      <div style="background:#12141c;border-radius:8px;padding:14px;font-size:11px;font-family:monospace;line-height:1.8;">
+for each 行业 in 所有行业:
+    candidates = []  // 行业内所有个股的 (code, ret_20)
+    for each 个股 in 行业:
+        ret_20 = (close[-1] / close[-20] − 1) × 100
+        candidates.append((code, ret_20))
+    best = max(candidates, key=ret_20)  // 取 20 日收益率最高者
+    if best.ret_20 > 0:                 // 仅正收益纳入
+        rotation_set.add(best.code)
+      </div>
+
+      <h4 style="color:var(--text);margin-top:16px;">关键设计</h4>
+      <ul>
+        <li>每个行业最多选出 <strong>1 只</strong>动量最强的股票（best-in-industry）</li>
+        <li>仅纳入 <strong>正收益</strong> 股票（ret_20 > 0），排除下跌行业</li>
+        <li>行业覆盖不设上限——只要行业有正收益龙头即可入选</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 算法三：多因子评分 -->
+  <div class="diff-card" style="border-left: 4px solid var(--green); margin-bottom: 20px;">
+    <h3 style="color: var(--green);">🧬 算法三 · 多因子评分 (Multi-Factor Scoring)</h3>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.8;">
+      <p><strong>核心思想：</strong>用一个综合评分公式在收益（动量）和风险（波动）之间做权衡，选 Top N 性价比最高的股票。</p>
+
+      <h4 style="color:var(--text);margin-top:16px;">评分公式</h4>
+      <div style="background:#12141c;border-radius:8px;padding:18px;text-align:center;font-size:15px;font-family:monospace;margin:12px 0;">
+        <strong style="font-size:18px;">Score = 50 + (ret_20 × 1.5) − (vol × 2.0)</strong><br>
+        <span style="font-size:11px;color:var(--text-tertiary);">ret_20 = (close[-1] / close[-20] − 1) × 100 &nbsp;|&nbsp; vol = std(pct_change)</span>
+      </div>
+
+      <h4 style="color:var(--text);margin-top:16px;">参数说明</h4>
+      <table class="feature-table" style="font-size:13px;">
+        <thead><tr><th>参数</th><th>默认值</th><th>含义</th><th>可调范围</th></tr></thead>
+        <tbody>
+          <tr><td><strong>基准分</strong></td><td><code>50</code></td><td>中性起点，高于 50 偏多</td><td>0 – 100</td></tr>
+          <tr><td><strong>动量权重</strong></td><td><code>1.5</code></td><td>每 1% 收益贡献 1.5 分</td><td>0 – 5.0</td></tr>
+          <tr><td><strong>波动惩罚</strong></td><td><code>2.0</code></td><td>每 1 个标准差惩罚 2 分</td><td>0 – 5.0</td></tr>
+          <tr><td><strong>动量窗口</strong></td><td><code>20 日</code></td><td>ret_20 的回顾天数</td><td>5 – 60 日</td></tr>
+          <tr><td><strong>Top N</strong></td><td><code>20</code></td><td>得分前 N 名纳入因子集</td><td>5 – 50</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="color:var(--text);margin-top:16px;">计算示例</h4>
+      <div style="background:#12141c;border-radius:8px;padding:14px;font-size:12px;font-family:monospace;line-height:1.8;">
+// 某股 20 日涨 10%，波动率 2% → 得分 61 (较强)<br>
+// 某股 20 日涨 5%，波动率 8% → 得分 41.5 (高波动侵蚀收益)<br>
+// 公式体现了"波动厌恶"倾向——惩罚权重 (2.0) > 奖励权重 (1.5)
+      </div>
+    </div>
+  </div>
+
+  <!-- 三策略交集 -->
+  <div class="diff-card" style="border-left: 4px solid var(--accent); margin-bottom: 20px; background: rgba(245,158,11,0.05);">
+    <h3 style="color: var(--accent);">⭐ 三策略精选 (Intersection)</h3>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.8;">
+      <p>三策略从不同维度独立选股，取 <strong>交集</strong> 意味着股票必须同时满足三个独立逻辑——趋势向好 + 行业龙头 + 性价比高。这是最强的综合信号。</p>
+
+      <div style="text-align:center;padding:16px;background:#12141c;border-radius:8px;margin:12px 0;">
+        <span style="font-size:18px;font-weight:700;">精选 = 趋势集 ∩ 轮动集 ∩ 因子集</span>
+      </div>
+
+      <table class="feature-table" style="font-size:13px;">
+        <thead><tr><th>策略</th><th>维度</th><th>看什么</th></tr></thead>
+        <tbody>
+          <tr><td><span style="color:var(--blue);">📐 趋势</span></td><td>技术面</td><td>均线多头排列 + 短期动量确认</td></tr>
+          <tr><td><span style="color:var(--accent);">🔄 轮动</span></td><td>行业面</td><td>行业内最强 + 正动量</td></tr>
+          <tr><td><span style="color:var(--green);">🧬 因子</span></td><td>量化面</td><td>收益/波动综合性价比 Top N</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;">三个维度独立不重复，交集天然具有较高胜率。因条件严格，结果可能较少——「质优于量」的设计哲学。</p>
+    </div>
+  </div>
+
+  <!-- 七条件过滤器 -->
+  <div class="diff-card" style="border-left: 4px solid var(--red); margin-bottom: 20px; background: rgba(239,68,68,0.03);">
+    <h3 style="color: var(--red);">🔍 七条件叠加过滤器 (7-Condition Filter)</h3>
+    <div style="font-size:14px;color:var(--text-secondary);line-height:1.8;">
+      <p><strong>核心思想：</strong>在三策略精选的基础上，叠加 7 个严格的技术面条件进行二次验证，确保信号的即时有效性。<strong>支持严格/宽松双模式</strong>，用户可以逐条件调整阈值。</p>
+
+      <h4 style="color:var(--text);margin-top:16px;">七条件明细（含双模式阈值）</h4>
+      <table class="feature-table" style="font-size:12px;">
+        <thead>
+          <tr><th>#</th><th>条件</th><th>严格模式</th><th>宽松模式</th><th>原理</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>①</td><td><strong>非 ST 股</strong></td>
+            <td colspan="2" style="text-align:center">名称不含 "ST" 或 "st"</td>
+            <td>排除高风险警示板股票</td>
+          </tr>
+          <tr>
+            <td>②</td><td><strong>10 日涨幅</strong></td>
+            <td><code>ret_10d > 5%</code></td>
+            <td><code>ret_10d ≥ 0%</code></td>
+            <td>确保中期处于上升通道</td>
+          </tr>
+          <tr>
+            <td>③</td><td><strong>量比</strong></td>
+            <td><code>量比 > 1.5</code></td>
+            <td><code>量比 > 1.0</code></td>
+            <td>今日放量——有资金关注</td>
+          </tr>
+          <tr>
+            <td>④</td><td><strong>今日涨幅区间</strong></td>
+            <td><code>3% ≤ pct ≤ 5%</code></td>
+            <td><code>0% ≤ pct ≤ 7%</code></td>
+            <td>温和上涨——不过热也不过冷</td>
+          </tr>
+          <tr>
+            <td>⑤</td><td><strong>收盘 > MA5</strong></td>
+            <td colspan="2" style="text-align:center"><code>close > MA(close, 5)</code></td>
+            <td>收盘价高于 5 日均线——短线强势</td>
+          </tr>
+          <tr>
+            <td>⑥</td><td><strong>3 日资金流入</strong></td>
+            <td colspan="2" style="text-align:center"><code>近 3 日成交额 > 前 3 日成交额</code></td>
+            <td>成交额加速——资金持续流入</td>
+          </tr>
+          <tr>
+            <td>⑦</td><td><strong>今日超额成交</strong></td>
+            <td colspan="2" style="text-align:center"><code>今日成交额 > 5 日均成交额</code></td>
+            <td>当日资金活跃度超平均</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4 style="color:var(--text);margin-top:16px;">公式补充</h4>
+      <div style="background:#12141c;border-radius:8px;padding:14px;font-size:11px;font-family:monospace;line-height:2;">
+// 条件②：10 日涨幅<br>
+ret_10d = (close[-1] / close[-11] − 1) × 100 &nbsp;&nbsp;<span style="color:var(--text-tertiary);">// 第 1 天到第 11 天跨度 10 个交易日</span><br><br>
+// 条件③：量比<br>
+vol_ratio = vol_today / mean(volume[-5:])<br><br>
+// 条件⑤：收盘 vs MA5<br>
+close > mean(close[-5:])<br><br>
+// 条件⑥：3 日资金流入<br>
+amt_recent = sum(amount[-3:]) &nbsp;>&nbsp; amt_prev = sum(amount[-6:-3])<br><br>
+// 条件⑦：今日超额成交<br>
+amt_today > mean(amount[-5:])
+      </div>
+
+      <h4 style="color:var(--text);margin-top:16px;">前置条件</h4>
+      <ul>
+        <li>至少 <strong>30 个交易日</strong>数据</li>
+        <li>必须有 <code>amount</code>（成交额）字段</li>
+        <li>5 日均量不能为零</li>
+      </ul>
     </div>
   </div>
 </div>
 
-<!-- ======== 9. 数据库设计 ======== -->
+<!-- ======== 8c. 可配置参数体系 ======== -->
+<div class="section" id="s8c">
+  <div class="section-title"><span class="icon">⚙️</span> 十、可配置参数体系设计</div>
+  <div class="section-desc">核心理念：所有阈值、系数、窗口期均暴露为用户可调整的参数，内置合理默认值</div>
+
+  <!-- 设计原则 -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-bottom:24px;">
+    <div class="overview-card">
+      <h3>🎛️ 参数设计原则</h3>
+      <span class="en">Design Principles</span>
+      <ul>
+        <li><strong>零硬编码</strong>：所有数值型阈值均来自配置文件，引擎不内置任何魔法数字</li>
+        <li><strong>合理默认值</strong>：每个参数都有基于回测经验的出厂默认值</li>
+        <li><strong>范围约束</strong>：每个参数都有最小/最大值，防止用户设置极端不合理值</li>
+        <li><strong>克隆即修改</strong>：种子策略不可直接编辑，用户克隆副本后自由调整参数</li>
+        <li><strong>即时预览</strong>：参数调整后可快速测试，显示匹配股票数量变化</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>💾 持久化策略</h3>
+      <span class="en">Persistence</span>
+      <ul>
+        <li>完整策略配置（含所有参数）以 <strong>JSON blob</strong> 存入 SQLite <code>strategies</code> 表</li>
+        <li>每条策略记录包含 <code>schema_version</code> 字段，支持配置格式升级迁移</li>
+        <li>种子策略标记 <code>is_seed=1</code>，用户不可直接覆盖</li>
+        <li>用户自定义策略通过 <code>source_strategy_id</code> 追溯来源种子</li>
+        <li>App 升级时种子策略参数可平滑更新，用户定制不受影响</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>🔄 参数版本兼容</h3>
+      <span class="en">Version Compatibility</span>
+      <ul>
+        <li><strong>向前兼容读取</strong>：新版本引擎可读取旧版本策略配置，缺失字段自动填充默认值</li>
+        <li><strong>不删字段</strong>：JSON schema 只增不减，旧字段作为 fallback 保留至少一个大版本</li>
+        <li><strong>升级提示</strong>：用户打开旧版本策略时提示"可升级至最新参数模板"，用户自主选择</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 参数总表 -->
+  <h3 style="margin: 24px 0 16px;">📋 全部可配置参数一览</h3>
+  <div style="overflow-x:auto;">
+
+  <h4 style="color:var(--blue);margin:16px 0 8px;">一、趋势策略参数</h4>
+  <table class="feature-table" style="font-size:13px;">
+    <thead><tr><th>参数标识</th><th>中文名称</th><th>默认值</th><th>范围</th><th>步长</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>trend.min_data_days</code></td><td>最少数据天数</td><td>60</td><td>20 – 250</td><td>5</td><td>低于此天数跳过不计算</td></tr>
+      <tr><td><code>trend.ma_fast</code></td><td>快速均线周期</td><td>20</td><td>5 – 60</td><td>1</td><td>MA20 窗口</td></tr>
+      <tr><td><code>trend.ma_slow</code></td><td>慢速均线周期</td><td>60</td><td>20 – 250</td><td>5</td><td>MA60 窗口，须 ≥ ma_fast</td></tr>
+      <tr><td><code>trend.short_lookback</code></td><td>短期比较回看天数</td><td>5</td><td>1 – 20</td><td>1</td><td>close vs close[N天前]</td></tr>
+      <tr><td><code>trend.require_close_above_ma</code></td><td>要求价格站上快线</td><td>true</td><td>true/false</td><td>—</td><td>是否启用 close > MA_fast 条件</td></tr>
+      <tr><td><code>trend.require_ma_cross</code></td><td>要求均线多头排列</td><td>true</td><td>true/false</td><td>—</td><td>是否启用 MA_fast > MA_slow 条件</td></tr>
+      <tr><td><code>trend.require_short_momentum</code></td><td>要求短期动量</td><td>true</td><td>true/false</td><td>—</td><td>是否启用 close > close[N天前]</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="color:var(--accent);margin:24px 0 8px;">二、行业轮动参数</h4>
+  <table class="feature-table" style="font-size:13px;">
+    <thead><tr><th>参数标识</th><th>中文名称</th><th>默认值</th><th>范围</th><th>步长</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>rotation.momentum_period</code></td><td>动量计算周期</td><td>20</td><td>5 – 120</td><td>5</td><td>ret_N 的 N 值</td></tr>
+      <tr><td><code>rotation.min_return</code></td><td>最低收益率门槛(%)</td><td>0</td><td>-20 – 20</td><td>0.5</td><td>低于此值的行业龙头不纳入</td></tr>
+      <tr><td><code>rotation.max_per_industry</code></td><td>每行业最多选股数</td><td>1</td><td>1 – 5</td><td>1</td><td>每个行业最多入选几只</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="color:var(--green);margin:24px 0 8px;">三、多因子评分参数</h4>
+  <table class="feature-table" style="font-size:13px;">
+    <thead><tr><th>参数标识</th><th>中文名称</th><th>默认值</th><th>范围</th><th>步长</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>factor.momentum_period</code></td><td>动量周期</td><td>20</td><td>5 – 120</td><td>5</td><td>收益率计算窗口 (日)</td></tr>
+      <tr><td><code>factor.base_score</code></td><td>基准分</td><td>50</td><td>0 – 100</td><td>1</td><td>评分公式截距</td></tr>
+      <tr><td><code>factor.momentum_weight</code></td><td>动量权重</td><td>1.5</td><td>0 – 5.0</td><td>0.1</td><td>每 1% 收益的加分</td></tr>
+      <tr><td><code>factor.volatility_penalty</code></td><td>波动惩罚</td><td>2.0</td><td>0 – 5.0</td><td>0.1</td><td>每 1 个标准差的扣分</td></tr>
+      <tr><td><code>factor.top_n</code></td><td>入选数量</td><td>20</td><td>5 – 100</td><td>1</td><td>得分前 N 名纳入因子集</td></tr>
+      <tr><td><code>factor.min_data_days</code></td><td>最少数据天数</td><td>60</td><td>20 – 250</td><td>5</td><td>低于此天数跳过不评分</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="color:var(--red);margin:24px 0 8px;">四、七条件过滤器参数</h4>
+  <table class="feature-table" style="font-size:13px;">
+    <thead><tr><th>参数标识</th><th>中文名称</th><th>默认值</th><th>范围</th><th>步长</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>前置条件</strong></td></tr>
+      <tr><td><code>filter.min_data_days</code></td><td>最少数据天数</td><td>30</td><td>10 – 120</td><td>5</td><td>低于此天数跳过七条件检查</td></tr>
+      <tr><td><code>filter.require_amount_data</code></td><td>要求成交额数据</td><td>true</td><td>true/false</td><td>—</td><td>关闭后条件⑥⑦自动跳过</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>① 非 ST 过滤</strong></td></tr>
+      <tr><td><code>filter.c1_exclude_st</code></td><td>排除 ST 股票</td><td>true</td><td>true/false</td><td>—</td><td>名称含 "ST" 的排除</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>② 10 日涨幅</strong></td></tr>
+      <tr><td><code>filter.c2_ret_period</code></td><td>涨幅计算周期</td><td>10</td><td>5 – 60</td><td>1</td><td>N 日收益率天数</td></tr>
+      <tr><td><code>filter.c2_strict_min</code></td><td>严格模式最低(%)</td><td>5</td><td>-10 – 30</td><td>0.5</td><td>严格模式下 ret 须 > 此值</td></tr>
+      <tr><td><code>filter.c2_loose_min</code></td><td>宽松模式最低(%)</td><td>0</td><td>-10 – 30</td><td>0.5</td><td>宽松模式下 ret 须 ≥ 此值</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>③ 量比</strong></td></tr>
+      <tr><td><code>filter.c3_vol_period</code></td><td>量比均值周期</td><td>5</td><td>3 – 30</td><td>1</td><td>对比 N 日均量</td></tr>
+      <tr><td><code>filter.c3_strict_min</code></td><td>严格模式最低量比</td><td>1.5</td><td>0.5 – 5.0</td><td>0.1</td><td>严格模式下量比须 > 此值</td></tr>
+      <tr><td><code>filter.c3_loose_min</code></td><td>宽松模式最低量比</td><td>1.0</td><td>0.5 – 5.0</td><td>0.1</td><td>宽松模式下量比须 > 此值</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>④ 今日涨幅区间</strong></td></tr>
+      <tr><td><code>filter.c4_strict_low</code></td><td>严格模式区间下限(%)</td><td>3.0</td><td>-10 – 10</td><td>0.1</td><td>严格模式最低涨幅</td></tr>
+      <tr><td><code>filter.c4_strict_high</code></td><td>严格模式区间上限(%)</td><td>5.0</td><td>-10 – 10</td><td>0.1</td><td>严格模式最高涨幅</td></tr>
+      <tr><td><code>filter.c4_loose_low</code></td><td>宽松模式区间下限(%)</td><td>0.0</td><td>-10 – 10</td><td>0.1</td><td>宽松模式最低涨幅</td></tr>
+      <tr><td><code>filter.c4_loose_high</code></td><td>宽松模式区间上限(%)</td><td>7.0</td><td>-10 – 10</td><td>0.1</td><td>宽松模式最高涨幅</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>⑤ 收盘站上 MA</strong></td></tr>
+      <tr><td><code>filter.c5_ma_period</code></td><td>MA 周期</td><td>5</td><td>3 – 60</td><td>1</td><td>收盘 > MA(N)</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>⑥ 近 N 日资金流入</strong></td></tr>
+      <tr><td><code>filter.c6_recent_days</code></td><td>近期天数</td><td>3</td><td>1 – 10</td><td>1</td><td>近 N 日成交额</td></tr>
+      <tr><td><code>filter.c6_prior_days</code></td><td>对比前推天数</td><td>3</td><td>1 – 10</td><td>1</td><td>对比前 N 日成交额</td></tr>
+      <tr style="background:rgba(255,255,255,0.02);"><td colspan="6"><strong>⑦ 今日成交额 > 均额</strong></td></tr>
+      <tr><td><code>filter.c7_amt_period</code></td><td>成交额均值周期</td><td>5</td><td>3 – 30</td><td>1</td><td>今日成交额 > N 日均额</td></tr>
+    </tbody>
+  </table>
+
+  <h4 style="color:var(--text);margin:24px 0 8px;">五、全局扫描参数</h4>
+  <table class="feature-table" style="font-size:13px;">
+    <thead><tr><th>参数标识</th><th>中文名称</th><th>默认值</th><th>范围</th><th>步长</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>global.industry_filter</code></td><td>行业筛选</td><td>"全部"</td><td>枚举</td><td>—</td><td>限定扫描的行业范围</td></tr>
+      <tr><td><code>global.max_stocks</code></td><td>最大扫描数量</td><td>200</td><td>10 – 2000</td><td>10</td><td>控制扫描耗时</td></tr>
+      <tr><td><code>global.only_all_three</code></td><td>仅显示精选</td><td>false</td><td>true/false</td><td>—</td><td>勾选后不展示单独策略结果</td></tr>
+      <tr><td><code>global.strict_mode</code></td><td>七条件严格模式</td><td>false</td><td>true/false</td><td>—</td><td>false=宽松, true=严格</td></tr>
+      <tr><td><code>global.scan_mode</code></td><td>扫描模式</td><td>"行业"</td><td>"行业"/"持仓"</td><td>—</td><td>行业筛选或仅限持仓</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- 策略配置 JSON Schema -->
+  <h3 style="margin: 28px 0 16px;">📦 完整策略配置 JSON Schema</h3>
+  <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;">
+    <div style="background:#12141c;border-radius:8px;padding:18px;font-size:11px;font-family:'SF Mono',monospace;overflow-x:auto;line-height:1.6;max-height:500px;overflow-y:auto;">
+{<br>
+&nbsp;&nbsp;<span style="color:var(--text-tertiary);">// ===== 策略元信息 =====</span><br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">schema_version</span>": 2,<br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">name</span>": "Vibe 2.0 种子策略",<br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">category</span>": "seed",<br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">is_seed</span>": true,<br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">source_strategy_id</span>": null,<br>
+<br>
+&nbsp;&nbsp;<span style="color:var(--text-tertiary);">// ===== 趋势策略参数 =====</span><br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">trend</span>": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">min_data_days</span>": <span style="color:var(--blue);">60</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">ma_fast</span>": <span style="color:var(--blue);">20</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">ma_slow</span>": <span style="color:var(--blue);">60</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">short_lookback</span>": <span style="color:var(--blue);">5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">require_close_above_ma</span>": <span style="color:var(--blue);">true</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">require_ma_cross</span>": <span style="color:var(--blue);">true</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">require_short_momentum</span>": <span style="color:var(--blue);">true</span><br>
+&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span style="color:var(--text-tertiary);">// ===== 行业轮动参数 =====</span><br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">rotation</span>": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">momentum_period</span>": <span style="color:var(--blue);">20</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">min_return</span>": <span style="color:var(--blue);">0.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">max_per_industry</span>": <span style="color:var(--blue);">1</span><br>
+&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span style="color:var(--text-tertiary);">// ===== 多因子评分参数 =====</span><br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">factor</span>": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">momentum_period</span>": <span style="color:var(--blue);">20</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">base_score</span>": <span style="color:var(--blue);">50</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">momentum_weight</span>": <span style="color:var(--blue);">1.5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">volatility_penalty</span>": <span style="color:var(--blue);">2.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">top_n</span>": <span style="color:var(--blue);">20</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">min_data_days</span>": <span style="color:var(--blue);">60</span><br>
+&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span style="color:var(--text-tertiary);">// ===== 七条件过滤器参数 =====</span><br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">filter</span>": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">min_data_days</span>": <span style="color:var(--blue);">30</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">require_amount_data</span>": <span style="color:var(--blue);">true</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c1_exclude_st</span>": <span style="color:var(--blue);">true</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c2_ret_period</span>": <span style="color:var(--blue);">10</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c2_strict_min</span>": <span style="color:var(--blue);">5.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c2_loose_min</span>": <span style="color:var(--blue);">0.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c3_vol_period</span>": <span style="color:var(--blue);">5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c3_strict_min</span>": <span style="color:var(--blue);">1.5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c3_loose_min</span>": <span style="color:var(--blue);">1.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c4_strict_low</span>": <span style="color:var(--blue);">3.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c4_strict_high</span>": <span style="color:var(--blue);">5.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c4_loose_low</span>": <span style="color:var(--blue);">0.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c4_loose_high</span>": <span style="color:var(--blue);">7.0</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c5_ma_period</span>": <span style="color:var(--blue);">5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c6_recent_days</span>": <span style="color:var(--blue);">3</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c6_prior_days</span>": <span style="color:var(--blue);">3</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">c7_amt_period</span>": <span style="color:var(--blue);">5</span><br>
+&nbsp;&nbsp;},<br>
+<br>
+&nbsp;&nbsp;<span style="color:var(--text-tertiary);">// ===== 全局扫描参数 =====</span><br>
+&nbsp;&nbsp;"<span style="color:var(--accent);">global</span>": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">industry_filter</span>": <span style="color:var(--accent);">"全部"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">max_stocks</span>": <span style="color:var(--blue);">200</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">only_all_three</span>": <span style="color:var(--blue);">false</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">strict_mode</span>": <span style="color:var(--blue);">false</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"<span style="color:var(--green);">scan_mode</span>": <span style="color:var(--accent);">"行业"</span><br>
+&nbsp;&nbsp;}<br>
+}
+    </div>
+  </div>
+
+  <!-- 参数编辑 UI 设计 -->
+  <h3 style="margin: 28px 0 16px;">🖥️ 参数编辑 UI 设计规范</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+    <div class="overview-card">
+      <h3>滑块控件 (Slider)</h3>
+      <span class="en">适用于：数值型连续参数</span>
+      <ul>
+        <li>显示当前值 + 单位标签</li>
+        <li>左右拖动调整，实时预览匹配数变化</li>
+        <li>超出默认值范围时滑块颜色变为橙色提示</li>
+        <li>双击恢复默认值</li>
+        <li>适用：MA 周期、权重系数、涨跌幅阈值</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>开关控件 (Toggle)</h3>
+      <span class="en">适用于：布尔型参数</span>
+      <ul>
+        <li>iOS 风格开关，绿色=启用</li>
+        <li>适用：是否启用某条件、严格/宽松模式</li>
+        <li>关闭某个条件时，该条件下所有子参数灰显</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>分段控件 (Segmented Control)</h3>
+      <span class="en">适用于：枚举型参数</span>
+      <ul>
+        <li>2-5 个选项水平排列</li>
+        <li>适用：扫描模式（行业/持仓）、严格/宽松模式</li>
+        <li>切换时立即刷新参数面板显示对应模式阈值</li>
+      </ul>
+    </div>
+    <div class="overview-card">
+      <h3>数字输入框 (Stepper)</h3>
+      <span class="en">适用于：精确整数参数</span>
+      <ul>
+        <li>− / 数值 / + 三段布局</li>
+        <li>长按 ± 按钮连续增减</li>
+        <li>超出范围自动钳制到边界值</li>
+        <li>适用：Top N、数据天数、窗口期</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;padding:16px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);">
+    <h4 style="margin-bottom:8px;">🔔 参数变更即时反馈</h4>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+      每次参数变更后，引擎在后台以 <strong>轻量采样模式</strong>（随机抽取 10% 股票池）快速重跑策略，实时更新 UI 上显示的 <strong>"预计匹配数"</strong>。采样结果标注 "预估值"，完整扫描后替换为精确值。此设计确保参数调整体验流畅，不因完整扫描延迟（2-5 秒）而卡顿。
+    </p>
+  </div>
+
+  <!-- 种子策略克隆流程 -->
+  <h3 style="margin: 28px 0 16px;">🌱 种子策略 → 自定义策略 克隆流程</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;font-size:13px;padding:20px;background:var(--card-bg);border-radius:var(--radius);">
+    <div style="background:#12141c;border:1px solid var(--accent);border-radius:8px;padding:12px 18px;text-align:center;">
+      <strong>种子策略</strong><br>
+      <span style="font-size:10px;color:var(--text-tertiary);">is_seed=true · 只读</span>
+    </div>
+    <span style="color:var(--accent);font-size:18px;">→</span>
+    <div style="background:#12141c;border:1px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;">
+      <strong>点击「克隆并自定义」</strong><br>
+      <span style="font-size:10px;color:var(--text-tertiary);">复制全部参数</span>
+    </div>
+    <span style="color:var(--accent);font-size:18px;">→</span>
+    <div style="background:#12141c;border:2px solid var(--blue);border-radius:8px;padding:12px 18px;text-align:center;">
+      <strong>我的自定义策略</strong><br>
+      <span style="font-size:10px;color:var(--text-tertiary);">is_seed=false · 可编辑全部参数</span>
+    </div>
+    <span style="color:var(--accent);font-size:18px;">→</span>
+    <div style="background:#12141c;border:1px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;">
+      <strong>调整参数 → 保存</strong><br>
+      <span style="font-size:10px;color:var(--text-tertiary);">source_strategy_id 追溯来源</span>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;font-size:12px;color:var(--text-secondary);text-align:center;">
+    种子策略自身不可修改。App 升级时可静默更新种子策略默认参数，用户克隆的策略不受影响。
+  </div>
+</div>
+
+<!-- ======== 11. 数据库设计 ======== -->
 <div class="section" id="s9">
-  <div class="section-title"><span class="icon">🗄️</span> 九、SQLite 数据库设计</div>
+  <div class="section-title"><span class="icon">🗄️</span> 十一、SQLite 数据库设计</div>
   <div class="section-desc">本地表结构设计 — 轻量、高效、可导出</div>
 
   <table class="feature-table">
@@ -1223,9 +1726,9 @@
   </div>
 </div>
 
-<!-- ======== 10. 技术选型 ======== -->
+<!-- ======== 12. 技术选型 ======== -->
 <div class="section" id="s10">
-  <div class="section-title"><span class="icon">🛠️</span> 十、技术选型</div>
+  <div class="section-title"><span class="icon">🛠️</span> 十二、技术选型</div>
   <div class="section-desc">纯本地移动端技术栈，零服务器依赖</div>
 
   <div class="tech-grid">
@@ -1283,9 +1786,9 @@
   </div>
 </div>
 
-<!-- ======== 11. 版本路线 ======== -->
+<!-- ======== 13. 版本路线 ======== -->
 <div class="section" id="s11">
-  <div class="section-title"><span class="icon">🗺️</span> 十一、版本迭代路线图</div>
+  <div class="section-title"><span class="icon">🗺️</span> 十三、版本迭代路线图</div>
   <div class="section-desc">聚焦本地能力，逐步迭代</div>
 
   <div class="roadmap">

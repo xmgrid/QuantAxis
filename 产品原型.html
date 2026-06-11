@@ -1149,113 +1149,404 @@
     </div>
   </div>
 
-  <!-- ============ SCREEN: SEED STRATEGIES ============ -->
+  <!-- ============ SCREEN: SEED STRATEGIES (Vibe 2.0) ============ -->
   <div class="screen" id="screen-triple">
     <div class="content fade-in" style="padding-top:4px;">
       <button class="back-btn" onclick="showScreen('main'); currentMainSub='screener'; renderVersion();">← 选股</button>
 
       <div class="stock-header">
         <div class="name-row">
-          <span class="stock-name-lg">种子策略</span>
-          <span class="triple-badge">算法策略</span>
+          <span class="stock-name-lg">Vibe 2.0 算法策略</span>
+          <span class="triple-badge">内置算法</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">三大经典量化算法 — 趋势 · 轮动 · 多因子</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">趋势 · 行业轮动 · 多因子评分 → 交集精选 → 七条件过滤</div>
+      </div>
+
+      <!-- 算法流水线示意 -->
+      <div style="display:flex;gap:4px;align-items:center;justify-content:center;padding:8px 0;font-size:10px;color:var(--text-tertiary);flex-wrap:wrap;">
+        <span style="background:var(--card);padding:3px 8px;border-radius:6px;">📐 趋势</span><span>+</span>
+        <span style="background:var(--card);padding:3px 8px;border-radius:6px;">🔄 轮动</span><span>+</span>
+        <span style="background:var(--card);padding:3px 8px;border-radius:6px;">🧬 因子</span><span>=</span>
+        <span style="background:rgba(255,159,10,0.15);padding:3px 8px;border-radius:6px;color:var(--accent);">⭐精选</span><span>→</span>
+        <span style="background:rgba(255,69,58,0.15);padding:3px 8px;border-radius:6px;color:var(--red);">🔍7条件</span>
       </div>
 
       <!-- Strategy 1: 趋势策略 -->
-      <div class="card" style="border-left:3px solid var(--red);">
+      <div class="card" style="border-left:3px solid var(--blue);">
         <div class="section-header">
-          <span class="section-label">📐 种子一 · 趋势策略</span>
-          <span class="triple-badge">Trend Following</span>
+          <span class="section-label">📐 策略一 · 趋势跟随</span>
+          <span style="font-size:10px;color:var(--text-tertiary);">Trend Following</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-          <strong>算法原理：</strong>基于多周期均线系统 + ADX 趋势强度 + 通道突破，识别处于主升浪的标的。不预测拐点，只跟随趋势。
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong>算法：</strong>双均线多头排列三重确认 — <code>close > MA20</code> 且 <code>MA20 > MA60</code> 且 <code>close > close[5日前]</code>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">MA5/10/20/60 排列</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">ADX > 25</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">价格 > MA60</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">布林带开口</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">新高突破</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(10,132,255,0.12);color:var(--blue);">close > MA20</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(10,132,255,0.12);color:var(--blue);">MA20 > MA60</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(10,132,255,0.12);color:var(--blue);">close > 5日前</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">最少60日数据</span>
         </div>
         <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:12px;color:var(--text-tertiary);">全股票池扫描</span>
-          <span style="font-size:16px;font-weight:600;color:var(--red);" onclick="showTrendResults()" id="trendCount">28 只</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span style="font-size:12px;color:var(--text-tertiary);">全股票池扫描</span>
+            <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:var(--card);color:var(--text-tertiary);cursor:pointer;" onclick="toggleTrendParams()" id="trendParamBtn">⚙️ 参数</span>
+          </div>
+          <span style="font-size:16px;font-weight:600;color:var(--blue);" onclick="showTrendResults()" id="trendCount">24 只</span>
         </div>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="showTrendResults()">▶ 查看趋势策略结果</button>
+        <!-- 可展开参数面板 -->
+        <div id="trendParams" style="display:none;margin-top:10px;padding:12px;background:var(--card);border-radius:8px;font-size:11px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div><span style="color:var(--text-tertiary);">快线周期:</span> <strong>20</strong> 日</div>
+            <div><span style="color:var(--text-tertiary);">慢线周期:</span> <strong>60</strong> 日</div>
+            <div><span style="color:var(--text-tertiary);">短期回看:</span> <strong>5</strong> 日</div>
+            <div><span style="color:var(--text-tertiary);">最少数据:</span> <strong>60</strong> 日</div>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--text-tertiary);">💡 点击「克隆并自定义」可独立调整每个参数</div>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="cloneStrategy('trend')">📋 克隆并自定义</button>
       </div>
 
       <!-- Strategy 2: 行业轮动策略 -->
-      <div class="card" style="border-left:3px solid var(--blue);">
+      <div class="card" style="border-left:3px solid var(--accent);">
         <div class="section-header">
-          <span class="section-label">🔄 种子二 · 行业轮动策略</span>
-          <span class="triple-badge">Sector Rotation</span>
+          <span class="section-label">🔄 策略二 · 行业轮动</span>
+          <span style="font-size:10px;color:var(--text-tertiary);">Sector Rotation</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-          <strong>算法原理：</strong>按周计算各行业相对强弱 RPS，识别当前领涨行业，在强势行业中优选龙头个股。捕捉板块轮动节奏。
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong>算法：</strong>每行业选取 20 日收益率最高的龙头股，仅纳入 <code>ret_20 > 0</code> 的正收益标的
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">行业 RPS 排名</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">板块资金流向</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">行业内龙头筛选</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">月度调仓</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(255,159,10,0.12);color:var(--accent);">ret_20 动量排序</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(255,159,10,0.12);color:var(--accent);">行业最优选</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(255,159,10,0.12);color:var(--accent);">ret_20 > 0</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">每行业1只</span>
         </div>
         <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <span style="font-size:10px;color:var(--accent);">当前强势行业：</span>
-            <span style="font-size:11px;color:var(--text);">半导体 · AI算力 · 新能源</span>
+            <span style="font-size:11px;color:var(--text);">半导体 · 电力设备 · 食品饮料</span>
           </div>
-          <span style="font-size:16px;font-weight:600;color:var(--blue);" id="rotationCount">12 只</span>
+          <span style="font-size:16px;font-weight:600;color:var(--accent);" id="rotationCount">12 只</span>
         </div>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="showRotationResults()">▶ 查看轮动策略结果</button>
+        <div id="rotationParams" style="display:none;margin-top:10px;padding:12px;background:var(--card);border-radius:8px;font-size:11px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div><span style="color:var(--text-tertiary);">动量周期:</span> <strong>20</strong> 日</div>
+            <div><span style="color:var(--text-tertiary);">最低收益:</span> <strong>0%</strong></div>
+            <div><span style="color:var(--text-tertiary);">每行业上限:</span> <strong>1</strong> 只</div>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--text-tertiary);">💡 点击「克隆并自定义」可独立调整每个参数</div>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="cloneStrategy('rotation')">📋 克隆并自定义</button>
       </div>
 
-      <!-- Strategy 3: 多因子策略 -->
+      <!-- Strategy 3: 多因子评分 -->
       <div class="card" style="border-left:3px solid var(--green);">
         <div class="section-header">
-          <span class="section-label">🧬 种子三 · 多因子策略</span>
-          <span class="triple-badge">Multi-Factor</span>
+          <span class="section-label">🧬 策略三 · 多因子评分</span>
+          <span style="font-size:10px;color:var(--text-tertiary);">Multi-Factor Scoring</span>
         </div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
-          <strong>算法原理：</strong>综合估值、质量、成长、动量、波动率五大类因子，加权打分排名。选取综合得分前 10% 的标的。
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong>公式：</strong><code>Score = 50 + ret_20 × 1.5 − vol × 2.0</code> — 收益与波动的综合性价比排名
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">估值因子 (PE/PB/PS)</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">质量因子 (ROE/毛利率)</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">成长因子 (营收/利润增速)</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">动量因子 (6M/12M 收益)</span>
-          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">波动因子 (低波)</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(48,209,88,0.12);color:var(--green);">20日收益 权重1.5</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(48,209,88,0.12);color:var(--green);">波动率 惩罚2.0</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(48,209,88,0.12);color:var(--green);">基准分 50</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:var(--card);color:var(--text-secondary);">Top 20</span>
         </div>
         <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:12px;color:var(--text-tertiary);">综合排名 Top 10%</span>
-          <span style="font-size:16px;font-weight:600;color:var(--green);" id="multifactorCount">16 只</span>
+          <span style="font-size:12px;color:var(--text-tertiary);">得分前 20 名纳入因子集</span>
+          <span style="font-size:16px;font-weight:600;color:var(--green);" id="multifactorCount">20 只</span>
         </div>
-        <button class="btn-secondary" style="margin-top:8px;" onclick="showMultifactorResults()">▶ 查看多因子策略结果</button>
+        <div id="factorParams" style="display:none;margin-top:10px;padding:12px;background:var(--card);border-radius:8px;font-size:11px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div><span style="color:var(--text-tertiary);">动量周期:</span> <strong>20</strong> 日</div>
+            <div><span style="color:var(--text-tertiary);">基准分:</span> <strong>50</strong></div>
+            <div><span style="color:var(--text-tertiary);">动量权重:</span> <strong>1.5</strong></div>
+            <div><span style="color:var(--text-tertiary);">波动惩罚:</span> <strong>2.0</strong></div>
+            <div><span style="color:var(--text-tertiary);">Top N:</span> <strong>20</strong></div>
+            <div><span style="color:var(--text-tertiary);">最少数据:</span> <strong>60</strong> 日</div>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--text-tertiary);">💡 示例：20日涨10%+波动2% → Score=61 | 涨5%+波动8% → Score=41.5</div>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px;" onclick="cloneStrategy('factor')">📋 克隆并自定义</button>
       </div>
 
-      <div style="text-align:center;padding:16px;font-size:11px;color:var(--text-tertiary);line-height:1.6;">
-        三大种子策略独立运行、每日更新<br>扫描范围：120 只 · 更新时间：2026-06-10 18:00<br><br>
-        <span style="font-size:10px;">⚠️ 种子策略为预设算法模板，参数可在策略编辑器中微调</span>
+      <!-- 三策略精选 + 七条件 -->
+      <div class="card" style="border:2px solid var(--accent);background:rgba(255,159,10,0.04);">
+        <div class="section-header">
+          <span class="section-label">⭐ 三策略精选 + 七条件过滤</span>
+          <span class="triple-badge">最强信号</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <strong>精选 =</strong> 趋势集 ∩ 轮动集 ∩ 因子集 &nbsp;→&nbsp; 再经 <strong>7 条件</strong>（非ST + 10日涨幅 + 量比 + 涨幅区间 + MA5 + 资金流入 + 超额成交）二次验证
+        </div>
+
+        <!-- 交集结果预览 -->
+        <div style="display:flex;gap:12px;margin-top:12px;">
+          <div style="flex:1;text-align:center;padding:10px;background:rgba(10,132,255,0.08);border-radius:8px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">三策略精选</div>
+            <div style="font-size:22px;font-weight:600;color:var(--accent);" id="tripleIntersectCount">5 只</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">交集信号</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:10px;background:rgba(255,69,58,0.06);border-radius:8px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">7条件宽松</div>
+            <div style="font-size:22px;font-weight:600;color:var(--red);" id="sevenLooseCount">3 只</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">通过过滤</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:10px;background:rgba(255,69,58,0.1);border-radius:8px;">
+            <div style="font-size:9px;color:var(--text-tertiary);">7条件严格</div>
+            <div style="font-size:22px;font-weight:600;color:var(--red);" id="sevenStrictCount">1 只</div>
+            <div style="font-size:9px;color:var(--text-tertiary);">极精选</div>
+          </div>
+        </div>
+
+        <!-- 模式切换 -->
+        <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
+          <span style="font-size:11px;color:var(--text-tertiary);">7条件模式:</span>
+          <span class="industry-filter-chip active" id="sevenModeLoose" onclick="setSevenMode('loose')" style="font-size:10px;">🟢 宽松</span>
+          <span class="industry-filter-chip" id="sevenModeStrict" onclick="setSevenMode('strict')" style="font-size:10px;">🔴 严格</span>
+          <span style="font-size:10px;color:var(--text-tertiary);margin-left:auto;">⚙️ 全部参数可调</span>
+        </div>
+
+        <!-- 七条件详细参数 -->
+        <div id="sevenParams" style="margin-top:10px;padding:12px;background:var(--card);border-radius:8px;font-size:11px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div><span style="color:var(--text-tertiary);">① 非ST:</span> <strong style="color:var(--green);">✓</strong></div>
+            <div><span style="color:var(--text-tertiary);">② 10日涨幅:</span> <strong id="sevenC2Label">≥ 0%</strong></div>
+            <div><span style="color:var(--text-tertiary);">③ 量比:</span> <strong id="sevenC3Label">> 1.0</strong></div>
+            <div><span style="color:var(--text-tertiary);">④ 涨幅区间:</span> <strong id="sevenC4Label">0% – 7%</strong></div>
+            <div><span style="color:var(--text-tertiary);">⑤ 收盘>MA5:</span> <strong style="color:var(--green);">✓</strong></div>
+            <div><span style="color:var(--text-tertiary);">⑥ 3日资金流入:</span> <strong style="color:var(--green);">✓</strong></div>
+            <div><span style="color:var(--text-tertiary);">⑦ 成交额>5日均:</span> <strong style="color:var(--green);">✓</strong></div>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);text-align:center;">
+            切换 宽松/严格 模式查看阈值变化 · 克隆后可逐条件精确调整
+          </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top:10px;background:var(--accent);" onclick="showVibeResults()">▶ 运行 Vibe 2.0 完整分析</button>
+      </div>
+
+      <div style="text-align:center;padding:12px;font-size:10px;color:var(--text-tertiary);line-height:1.6;">
+        扫描范围：120 只 · 更新时间：2026-06-10 18:00<br>
+        所有参数均可在克隆策略后自定义调整，阈值、权重、周期全部可配
       </div>
       <div style="height:80px;"></div>
     </div>
   </div>
 
-  <!-- ============ SCREEN: SEED STRATEGY RESULTS ============ -->
+  <!-- ============ SCREEN: SEED STRATEGY RESULTS (Vibe 2.0) ============ -->
   <div class="screen" id="screen-seed-results">
     <div class="content fade-in" style="padding-top:4px;">
-      <button class="back-btn" onclick="showScreen('triple')">← 种子策略</button>
+      <button class="back-btn" onclick="showScreen('triple')">← Vibe 2.0</button>
       <div class="stock-header">
         <div class="name-row"><span class="stock-name-lg" id="seedResultTitle">策略结果</span></div>
         <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;" id="seedResultDesc"></div>
       </div>
-      <div class="section-header"><span class="section-label">匹配标的</span></div>
-      <div class="card" id="seedResultList"></div>
+
+      <!-- 三策略交集精选 -->
+      <div class="card" style="border:1.5px solid var(--accent);" id="tripleResultCard">
+        <div class="section-header">
+          <span class="section-label">⭐ 三策略精选 (交集)</span>
+          <span style="font-size:10px;color:var(--accent);">最强综合信号</span>
+        </div>
+        <div id="tripleResultList"></div>
+        <div style="margin-top:8px;font-size:10px;color:var(--text-tertiary);text-align:center;">
+          同时满足：趋势 ✓ · 行业轮动 ✓ · 多因子 Top N ✓
+        </div>
+      </div>
+
+      <!-- 七条件过滤结果 -->
+      <div class="card" style="border:1.5px solid var(--red);margin-top:10px;" id="sevenResultCard">
+        <div class="section-header">
+          <span class="section-label">🔍 七条件叠加过滤</span>
+          <span style="font-size:10px;color:var(--red);" id="sevenModeLabel">宽松模式</span>
+        </div>
+        <div id="sevenResultList"></div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;font-size:9px;" id="sevenPassedConditions">
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ 非ST</span>
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ 10日涨幅</span>
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ 量比</span>
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ 涨幅区间</span>
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ MA5</span>
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ 资金流入</span>
+          <span style="padding:2px 6px;border-radius:4px;background:rgba(48,209,88,0.15);color:var(--green);">✓ 超额成交</span>
+        </div>
+      </div>
+
       <div style="height:80px;"></div>
     </div>
   </div>
 
-  <!-- ============ SCREEN: SCAN ============ -->
+  <!-- ============ SCREEN: PARAM CONFIG (Vibe 2.0) ============ -->
+  <div class="screen" id="screen-params">
+    <div class="content fade-in" style="padding-top:4px;">
+      <button class="back-btn" onclick="showScreen('triple')">← Vibe 2.0</button>
+
+      <div class="stock-header">
+        <div class="name-row"><span class="stock-name-lg">参数配置</span></div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;" id="paramStrategyName">自定义策略 · 克隆自「趋势策略」</div>
+      </div>
+
+      <!-- 策略名称 -->
+      <div class="editor-section">
+        <div class="editor-section-title">策略名称</div>
+        <input type="text" class="factor-select" id="paramStrategyNameInput" placeholder="输入策略名称..." value="我的自定义趋势策略">
+      </div>
+
+      <!-- 趋势参数组 (示例) -->
+      <div class="settings-group">
+        <div class="settings-group-title">📐 趋势策略参数</div>
+        <div class="card">
+          <div class="setting-row">
+            <span class="setting-label">快速均线周期 (MA快)</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -1)">−</span>
+              <strong style="min-width:28px;text-align:center;" data-param="ma_fast">20</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 1)">+</span>
+              <span style="font-size:10px;color:var(--text-tertiary);">日</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">慢速均线周期 (MA慢)</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -5)">−</span>
+              <strong style="min-width:28px;text-align:center;" data-param="ma_slow">60</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 5)">+</span>
+              <span style="font-size:10px;color:var(--text-tertiary);">日</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">短期动量回看天数</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -1)">−</span>
+              <strong style="min-width:28px;text-align:center;" data-param="short_lookback">5</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 1)">+</span>
+              <span style="font-size:10px;color:var(--text-tertiary);">日</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">最少数据天数</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -5)">−</span>
+              <strong style="min-width:28px;text-align:center;" data-param="min_data_days">60</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 5)">+</span>
+              <span style="font-size:10px;color:var(--text-tertiary);">日</span>
+            </span>
+          </div>
+          <div style="padding:8px 4px;display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="toggle on" onclick="this.classList.toggle('on')" id="toggleCloseAboveMA"></button>
+              <span style="font-size:12px;">close > MA快</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="toggle on" onclick="this.classList.toggle('on')" id="toggleMACross"></button>
+              <span style="font-size:12px;">MA快 > MA慢</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button class="toggle on" onclick="this.classList.toggle('on')" id="toggleMomentum"></button>
+              <span style="font-size:12px;">短期动量</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 多因子参数组 -->
+      <div class="settings-group">
+        <div class="settings-group-title">🧬 多因子评分参数</div>
+        <div class="card">
+          <div class="setting-row">
+            <span class="setting-label">基准分</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -1)">−</span>
+              <strong style="min-width:28px;text-align:center;" data-param="base_score">50</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 1)">+</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">动量权重</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -0.1, 1)">−</span>
+              <strong style="min-width:36px;text-align:center;" data-param="momentum_weight">1.5</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 0.1, 1)">+</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">波动惩罚</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -0.1, 1)">−</span>
+              <strong style="min-width:36px;text-align:center;" data-param="volatility_penalty">2.0</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 0.1, 1)">+</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Top N 入选数量</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -5)">−</span>
+              <strong style="min-width:28px;text-align:center;" data-param="top_n">20</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 5)">+</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 七条件参数组 -->
+      <div class="settings-group">
+        <div class="settings-group-title">🔍 七条件过滤参数 (<span id="paramSevenMode">宽松</span>模式)</div>
+        <div class="card">
+          <div style="display:flex;gap:6px;margin-bottom:12px;">
+            <span class="industry-filter-chip active" onclick="toggleSevenParamMode('loose', this)">🟢 宽松阈值</span>
+            <span class="industry-filter-chip" onclick="toggleSevenParamMode('strict', this)">🔴 严格阈值</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">② 10日涨幅最低</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -0.5, 1)">−</span>
+              <strong style="min-width:36px;text-align:center;" data-param="c2_min" data-mode="loose">0.0</strong><span style="font-size:10px;">%</span>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 0.5, 1)">+</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">③ 量比最低</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -0.1, 1)">−</span>
+              <strong style="min-width:36px;text-align:center;" data-param="c3_min" data-mode="loose">1.0</strong>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 0.1, 1)">+</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">④ 涨幅下限</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -0.5, 1)">−</span>
+              <strong style="min-width:36px;text-align:center;" data-param="c4_low" data-mode="loose">0.0</strong><span style="font-size:10px;">%</span>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 0.5, 1)">+</span>
+            </span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">④ 涨幅上限</span>
+            <span class="setting-value" style="display:flex;align-items:center;gap:8px;">
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, -0.5, 1)">−</span>
+              <strong style="min-width:36px;text-align:center;" data-param="c4_high" data-mode="loose">7.0</strong><span style="font-size:10px;">%</span>
+              <span style="cursor:pointer;font-size:18px;color:var(--text-tertiary);" onclick="adjustParam(this, 0.5, 1)">+</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div style="margin-top:4px;padding:10px;background:rgba(10,132,255,0.08);border-radius:10px;text-align:center;font-size:11px;color:var(--text-secondary);">
+        📊 预计匹配：<strong style="color:var(--accent);" id="estimatedMatch">~22 只</strong>（采样预估，保存后精确扫描）
+      </div>
+      <button class="btn-primary" onclick="saveCustomStrategy()">💾 保存策略</button>
+      <button class="btn-secondary" onclick="testCustomStrategy()">▶ 采样测试</button>
+      <button class="btn-secondary" onclick="showScreen('triple')" style="color:var(--text-tertiary);">取消</button>
+
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN: SCAN (Vibe 2.0) ============ -->
   <div class="screen" id="screen-scan">
     <div class="content fade-in" style="padding-top:4px;">
       <button class="back-btn" onclick="showScreen('main'); currentMainSub='screener'; renderVersion();">← 策略</button>
@@ -1402,7 +1693,7 @@ setInterval(updateClock, 30000);
 
 // ===== NAVIGATION =====
 function showScreen(name) {
-  ['screen-main','screen-detail','screen-results','screen-settings','screen-import','screen-editor','screen-triple','screen-scan','screen-portfolio-detail','screen-seed-results'].forEach(id => {
+  ['screen-main','screen-detail','screen-results','screen-settings','screen-import','screen-editor','screen-triple','screen-scan','screen-portfolio-detail','screen-seed-results','screen-params'].forEach(id => {
     document.getElementById(id).classList.remove('active');
   });
   const el = document.getElementById('screen-' + name);
@@ -1410,7 +1701,7 @@ function showScreen(name) {
 
   // Show/hide tab bar
   const tabBar = document.getElementById('mainTabBar');
-  const hideTabs = ['detail','results','settings','import','editor','triple','scan','portfolio-detail','seed-results'];
+  const hideTabs = ['detail','results','settings','import','editor','triple','scan','portfolio-detail','seed-results','params'];
   tabBar.style.display = hideTabs.includes(name) ? 'none' : 'flex';
 
   if (name === 'main') renderVersion();
@@ -2704,6 +2995,162 @@ document.addEventListener('click', function(e) {
     simulateManualSearch();
   }
 });
+
+// ===== VIBE 2.0 HELPER FUNCTIONS =====
+
+// Toggle trend parameter visibility
+function toggleTrendParams() {
+  const el = document.getElementById('trendParams');
+  const btn = document.getElementById('trendParamBtn');
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = '⚙️ 收起';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = '⚙️ 参数';
+  }
+}
+
+// Clone a seed strategy for customization
+function cloneStrategy(type) {
+  const names = { trend: '趋势策略', rotation: '行业轮动策略', factor: '多因子评分策略' };
+  document.getElementById('paramStrategyName').textContent = '自定义策略 · 克隆自「' + names[type] + '」';
+  document.getElementById('paramStrategyNameInput').value = '我的自定义' + names[type];
+  showScreen('params');
+}
+
+// Set seven-condition mode (loose/strict)
+function setSevenMode(mode) {
+  const looseEl = document.getElementById('sevenModeLoose');
+  const strictEl = document.getElementById('sevenModeStrict');
+  const c2Label = document.getElementById('sevenC2Label');
+  const c3Label = document.getElementById('sevenC3Label');
+  const c4Label = document.getElementById('sevenC4Label');
+
+  if (mode === 'strict') {
+    looseEl.classList.remove('active');
+    strictEl.classList.add('active');
+    c2Label.textContent = '> 5%';
+    c3Label.textContent = '> 1.5';
+    c4Label.textContent = '3% – 5%';
+    document.getElementById('sevenStrictCount').style.opacity = '1';
+    document.getElementById('sevenLooseCount').style.opacity = '0.5';
+  } else {
+    strictEl.classList.remove('active');
+    looseEl.classList.add('active');
+    c2Label.textContent = '≥ 0%';
+    c3Label.textContent = '> 1.0';
+    c4Label.textContent = '0% – 7%';
+    document.getElementById('sevenLooseCount').style.opacity = '1';
+    document.getElementById('sevenStrictCount').style.opacity = '0.5';
+  }
+}
+
+// Show full Vibe 2.0 results
+function showVibeResults() {
+  const intersectResults = [
+    {name:'中芯国际',code:'688981',price:'92.36',change:'+5.80%',dir:'up',score:'61.2',industry:'半导体'},
+    {name:'北方华创',code:'002371',price:'285.60',change:'+3.21%',dir:'up',score:'58.7',industry:'半导体'},
+    {name:'宁德时代',code:'300750',price:'205.50',change:'+4.10%',dir:'up',score:'56.3',industry:'电力设备'},
+    {name:'贵州茅台',code:'600519',price:'1674.00',change:'+3.15%',dir:'up',score:'54.8',industry:'食品饮料'},
+    {name:'韦尔股份',code:'603501',price:'108.50',change:'+2.15%',dir:'up',score:'53.1',industry:'半导体'},
+  ];
+
+  const sevenResults = [
+    {name:'中芯国际',code:'688981',price:'92.36',change:'+5.80%',dir:'up',conditions:'①②③④⑤⑥⑦ 全部通过'},
+    {name:'宁德时代',code:'300750',price:'205.50',change:'+4.10%',dir:'up',conditions:'①②③④⑤⑥⑦ 全部通过'},
+    {name:'北方华创',code:'002371',price:'285.60',change:'+3.21%',dir:'up',conditions:'①②③④⑤⑥⑦ 全部通过'},
+  ];
+
+  document.getElementById('seedResultTitle').textContent = 'Vibe 2.0 完整分析结果';
+  document.getElementById('seedResultDesc').textContent = '趋势 ∩ 轮动 ∩ 因子 → 精选 ' + intersectResults.length + ' 只 → 7条件过滤 ' + sevenResults.length + ' 只';
+
+  // Render intersection results
+  document.getElementById('tripleResultList').innerHTML = intersectResults.map((s, i) => `
+    <div class="stock-row" onclick="showStockDetail()">
+      <div style="font-size:16px;font-weight:700;color:var(--accent);min-width:28px;">${i+1}</div>
+      <div class="stock-info">
+        <div class="stock-name">${s.name} <span style="font-size:10px;color:var(--text-tertiary);">${s.industry}</span></div>
+        <div class="stock-code">${s.code} · 综合分 ${s.score}</div>
+      </div>
+      <div>
+        <div class="stock-price">${s.price}</div>
+        <div class="stock-change ${s.dir}">${s.change}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Render seven-condition results
+  document.getElementById('sevenResultList').innerHTML = sevenResults.length > 0 ? sevenResults.map((s, i) => `
+    <div class="stock-row" onclick="showStockDetail()">
+      <div style="font-size:16px;font-weight:700;color:var(--red);min-width:28px;">${i+1}</div>
+      <div class="stock-info">
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-code">${s.code} · ${s.conditions}</div>
+      </div>
+      <div>
+        <div class="stock-price">${s.price}</div>
+        <div class="stock-change ${s.dir}">${s.change}</div>
+      </div>
+    </div>
+  `).join('') : '<div style="text-align:center;padding:16px;color:var(--text-tertiary);">无股票通过七条件过滤（可切换宽松模式重试）</div>';
+
+  showScreen('seed-results');
+}
+
+// Adjust parameter value in config screen
+function adjustParam(el, delta, decimals) {
+  decimals = decimals || 0;
+  const strong = el.parentElement.querySelector('strong');
+  let val = parseFloat(strong.textContent);
+  val = Math.max(0, val + delta);
+  strong.textContent = decimals > 0 ? val.toFixed(decimals) : Math.round(val);
+
+  // Update estimated match count (simple mock)
+  const estimated = Math.max(1, Math.round(22 + (Math.random() - 0.5) * 10));
+  const estEl = document.getElementById('estimatedMatch');
+  if (estEl) estEl.textContent = '~' + estimated + ' 只';
+}
+
+// Toggle seven-condition param mode
+function toggleSevenParamMode(mode, el) {
+  el.parentElement.querySelectorAll('.industry-filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('paramSevenMode').textContent = mode === 'strict' ? '严格' : '宽松';
+
+  // Update all data-mode param displays
+  document.querySelectorAll('#screen-params strong[data-mode]').forEach(s => {
+    s.dataset.mode = mode;
+    const param = s.dataset.param;
+    const looseVals = { c2_min: '0.0', c3_min: '1.0', c4_low: '0.0', c4_high: '7.0' };
+    const strictVals = { c2_min: '5.0', c3_min: '1.5', c4_low: '3.0', c4_high: '5.0' };
+    s.textContent = (mode === 'strict' ? strictVals : looseVals)[param] || s.textContent;
+  });
+}
+
+// Save custom strategy
+function saveCustomStrategy() {
+  const name = document.getElementById('paramStrategyNameInput').value || '未命名策略';
+  showToast('✅ 策略「' + name + '」已保存');
+  setTimeout(() => showScreen('triple'), 1200);
+}
+
+// Test custom strategy
+function testCustomStrategy() {
+  const name = document.getElementById('paramStrategyNameInput').value || '未命名策略';
+  const estimated = Math.max(1, Math.round(18 + (Math.random() - 0.5) * 12));
+  const estEl = document.getElementById('estimatedMatch');
+  if (estEl) estEl.textContent = '~' + estimated + ' 只（采样预估）';
+  showToast('🔍 采样测试完成：预计匹配 ' + estimated + ' 只');
+}
+
+// Toast helper
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
 
 // ===== INIT =====
 renderVersion();

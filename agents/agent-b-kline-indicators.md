@@ -58,6 +58,38 @@ class IndicatorCalc {
 
   /// 通用：找金叉死叉
   static List<int> findCross(List<double?> fast, List<double?> slow, {bool up=true});
+
+  // ===== Vibe 2.0 新增指标 =====
+
+  /// N日收益率：ret_N = (close[-1] / close[-N-1] - 1) × 100
+  static double retNDays(List<DailyQuote> quotes, int nDays);
+
+  /// 收盘价是否站上MA(N)
+  static bool closeAboveMA(List<DailyQuote> quotes, int maPeriod);
+
+  /// 当前价 vs N日前价格比较
+  static bool priceAboveNDaysAgo(List<DailyQuote> quotes, int nDays);
+
+  /// 量比：今日成交量 / N日均量
+  static double volRatio(List<DailyQuote> quotes, {int period = 5});
+
+  /// 成交额流入判断：近recentDays日成交额 vs 前priorDays日成交额
+  static bool amountInflow(List<DailyQuote> quotes, {int recentDays = 3, int priorDays = 3});
+
+  /// 今日成交额是否大于N日均额
+  static bool amountAboveMA(List<DailyQuote> quotes, {int period = 5});
+
+  /// 今日涨跌幅是否在 [lowPct, highPct] 区间内
+  static bool pctChangeInRange(List<DailyQuote> quotes, double lowPct, double highPct);
+
+  /// ST 股票判断（基于名称）
+  static bool isST(List<DailyQuote> quotes, String stockName);
+
+  /// 波动率：日涨跌幅标准差
+  static double volatility(List<DailyQuote> quotes);
+
+  /// 均线多头排列判断：MA_fast > MA_slow
+  static bool maBullishAlign(List<DailyQuote> quotes, int fastPeriod, int slowPeriod);
 }
 ```
 

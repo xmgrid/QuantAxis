@@ -1,8 +1,8 @@
-# Agent D · 选股扫描 + 种子策略
+# Agent D · 选股扫描 + Vibe 2.0 种子策略
 
-> **依赖**：Agent A (StrategyDao), Agent B (KlinePainter), Agent C (StrategyRunner)  
+> **依赖**：Agent A (StrategyDao, VibeResultDao), Agent B (KlinePainter), Agent C (StrategyRunner, VibeEngine)  
 > **输出给**：Agent G  
-> **工期**：1.5 周
+> **工期**：2 周（+0.5 周 Vibe 2.0 管线UI）
 
 ---
 
@@ -70,81 +70,67 @@ class _ScreenerScreenState extends State<ScreenerScreen> {
 
 **文件**：`lib/screens/seed_strategies_screen.dart`
 
-展示三大算法策略（参考原型）：
+展示 Vibe 2.0 五大算法模块（参考原型 `screen-triple`）：
 
-#### 种子一 · 趋势策略
-- 算法原理说明
-- 因子标签：MA5/10/20/60排列 · ADX>25 · 价格>MA60 · 布林带开口 · 新高突破
-- 匹配数量 + 「▶ 查看趋势策略结果」按钮
+#### 种子一 · 趋势策略 (Trend Following)
+- **算法**：双均线多头排列三重确认
+- **公式**：`close > MA20` AND `MA20 > MA60` AND `close > close[5日前]`
+- **参数标签**：MA快=20日 · MA慢=60日 · 短期回看=5日 · 最少60日数据
+- **可配置**：MA周期、回看天数、三个条件开关 — 全部支持滑块/Toggle调整
+- **⚙️ 参数面板**：展开显示当前默认值 → 「📋 克隆并自定义」进入完整参数编辑
+- 匹配数量 + 「▶ 查看结果」按钮
 
-#### 种子二 · 行业轮动策略
-- 算法原理说明
-- 因子标签：行业RPS排名 · 板块资金流向 · 行业内龙头筛选 · 月度调仓
+#### 种子二 · 行业轮动策略 (Sector Rotation)
+- **算法**：每行业选20日收益率最高龙头，仅纳入 ret_20 > 0 正收益标的
+- **公式**：`max(行业内所有个股 ret_20)`, filter `ret_20 > 0`
+- **参数标签**：动量周期=20日 · 最低收益=0% · 每行业上限=1只
+- **可配置**：动量周期、最低收益门槛、行业上限数
 - 当前强势行业展示
-- 匹配数量 + 「▶ 查看轮动策略结果」按钮
+- 匹配数量 + 「▶ 查看结果」按钮
 
-#### 种子三 · 多因子策略
-- 算法原理说明
-- 因子标签：估值因子 · 质量因子 · 成长因子 · 动量因子 · 波动因子
-- 综合排名说明
-- 匹配数量 + 「▶ 查看多因子策略结果」按钮
+#### 种子三 · 多因子评分策略 (Multi-Factor Scoring)
+- **算法**：综合评分排名取 Top N
+- **公式**：`Score = 50 + ret_20 × 1.5 − vol × 2.0`
+- **参数标签**：动量周期=20日 · 基准分=50 · 动量权重=1.5 · 波动惩罚=2.0 · Top N=20
+- **可配置**：基准分、权重系数、波动惩罚、Top N数量、最少数据天数
+- 匹配数量 + 「▶ 查看结果」按钮
+
+#### 三策略精选 + 七条件过滤（合并卡片）
+- **精选公式**：`趋势集 ∩ 轮动集 ∩ 因子集`
+- **七条件**：非ST + 10日涨幅 + 量比 + 涨幅区间 + 收盘>MA5 + 资金流入 + 超额成交
+- **双模式**：严格/宽松 — 一键切换，阈值联动更新
+- **计数展示**：交集X只 · 7条件宽松Y只 · 7条件严格Z只
+- 「▶ 运行 Vibe 2.0 完整分析」按钮
 
 ```dart
-class SeedStrategyCard extends StatelessWidget {
+class VibeSeedStrategyCard extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final String algorithmDesc;
-  final List<String> factorTags;
+  final String algorithmFormula;      // 核心公式（一行）
+  final List<String> conditionTags;   // 算法标签
+  final Map<String, String> paramDefaults; // 参数名→默认值
   final int matchCount;
   final Color accentColor;
   final VoidCallback onViewResults;
+  final VoidCallback onCloneAndCustomize;  // → 打开参数编辑页
 }
 ```
 
-**每个种子策略的执行**：
+**Vibe 2.0 种子策略加载**：
 ```dart
-// 趋势策略
-final trendStrategy = StrategyParser.parse('''
-{
-  "logic": "AND",
-  "conditions": [
-    {"factor": "ma_position", "params": {"ma_list": [5,10,20,60], "relation": "bullish_align"}},
-    {"factor": "adx_trend", "params": {"min_adx": 25}},
-    {"factor": "price_break", "params": {"n": 60, "direction": "high"}},
-    {"factor": "boll_signal", "params": {"position": "upper_break"}}
-  ]
-}
-''');
-
-// 行业轮动策略
-final rotationStrategy = StrategyParser.parse('''
-{
-  "logic": "AND",
-  "conditions": [
-    {"factor": "industry_rps", "params": {"top_n": 3}},
-    {"factor": "vol_break", "params": {"n": 20, "m": 1.5}},
-    {"factor": "price_break", "params": {"n": 20, "direction": "high"}}
-  ]
-}
-''');
-
-// 多因子策略
-final multiFactorStrategy = StrategyParser.parse('''
-{
-  "logic": "AND",
-  "conditions": [
-    {"factor": "pe_range", "params": {"min": 0, "max": 50}},
-    {"factor": "roe_min", "params": {"min": 10}},
-    {"factor": "revenue_growth", "params": {"min_growth": 10}},
-    {"factor": "profit_growth", "params": {"min_growth": 10}}
-  ]
-}
-''');
+// 从 StrategyDao 加载，而非硬编码 DSL
+final vibeSeeds = await StrategyDao().getSeedStrategies();
+// vibeSeeds 包含4条：趋势、轮动、因子、完整管线
+// 每条策略的 configJson 包含全部可配置参数
+// 用户不可直接编辑种子，通过 cloneStrategy() 创建副本后调整
 ```
 
 **验收**：
-- [ ] 三个种子策略全部可查看
-- [ ] 每个策略的结果页显示匹配股票列表+排名+评分
+- [ ] 三个种子策略卡片显示实际算法公式（非通用描述）
+- [ ] 每个策略卡有 ⚙️ 参数展开面板，显示当前默认值
+- [ ] 三策略交集 + 七条件过滤 合并卡片，含严格/宽松模式切换
+- [ ] 切换严格/宽松时阈值标签联动更新
+- [ ] 「克隆并自定义」→ 进入参数编辑页，所有参数可独立调整
+- [ ] 克隆后保存 → strategies 表 source_strategy_id 正确追溯
 - [ ] 点击股票跳转个股详情
 
 ---

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe 量化 v2.0 — 算法文档</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d2991d;
+    --accent4: #f78166;
+    --red: #f85149;
+    --code-bg: #1c2128;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2rem; border-bottom: 2px solid var(--border); padding-bottom: 0.6rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; color: var(--accent); }
+  h3 { font-size: 1.2rem; margin: 1.5rem 0 0.8rem; color: var(--accent2); }
+  h4 { font-size: 1rem; margin: 1rem 0 0.5rem; color: var(--accent3); }
+  p, li { margin-bottom: 0.5rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  .card.warn { border-left: 4px solid var(--accent3); }
+  .card.info { border-left: 4px solid var(--accent); }
+  .card.success { border-left: 4px solid var(--accent2); }
+  .card.danger { border-left: 4px solid var(--red); }
+
+  .formula {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1.2rem;
+    margin: 0.8rem 0;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.95rem;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .formula .kw { color: #ff7b72; }
+  .formula .num { color: #a5d6ff; }
+  .formula .op { color: #ff7b72; }
+  .formula .fn { color: #d2a8ff; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+  }
+  th {
+    background: var(--code-bg);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+  .tag.trend { background: #1f3a5f; color: #58a6ff; }
+  .tag.factor { background: #1f3a2f; color: #3fb950; }
+  .tag.rotate { background: #3a2f1f; color: #d2991d; }
+  .tag.seven { background: #3a1f1f; color: #f85149; }
+
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .flow .step {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    white-space: nowrap;
+  }
+  .flow .arrow { color: var(--accent); font-weight: bold; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  .param-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.8rem;
+    margin: 1rem 0;
+  }
+  .param-item {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+  }
+  .param-item .name { font-weight: 600; color: var(--accent2); }
+  .param-item .val { font-family: monospace; }
+  .param-item .desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+  code {
+    background: var(--code-bg);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.9em;
+  }
+
+  .toc { margin: 1rem 0 2rem; }
+  .toc a { display: block; padding: 0.2rem 0; }
+
+  .highlight { background: rgba(88,166,255,0.15); padding: 0.1rem 0.3rem; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>📊 Vibe 量化 v2.0 — 算法文档</h1>
+<p style="color:var(--text-muted); margin-bottom:2rem;">
+  生成于 2026-06-11 · 对应文件: <code>docs/app.py</code> · 数据源: Tushare
+</p>
+
+<div class="card info" id="toc">
+  <h3 style="margin-top:0;">📑 目录</h3>
+  <div class="toc">
+    <a href="#overview">1. 系统总览</a>
+    <a href="#data-loading">2. 数据加载与预处理</a>
+    <a href="#trend">3. 趋势策略 (Trend Strategy)</a>
+    <a href="#factor">4. 多因子选股 (Multi-Factor)</a>
+    <a href="#rotation">5. 行业轮动 (Sector Rotation)</a>
+    <a href="#intersection">6. 三策略精选 (Intersection)</a>
+    <a href="#seven">7. 七条件叠加过滤 (7 Conditions)</a>
+    <a href="#signals-detail">8. 信号详情生成 (make_detail)</a>
+    <a href="#portfolio">9. 持仓管理</a>
+    <a href="#pipeline">10. 完整执行流水线</a>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="overview">1. 系统总览</h2>
+
+<p>Vibe 量化 v2.0 是一个基于 <strong>Streamlit</strong> 构建的 A 股量化分析工具，核心由 <strong>三大选股策略</strong> 和 <strong>七条件过滤器</strong> 组成。数据通过 Tushare 接口获取，存储在本地 <code>data/stock_list.csv</code> 和 <code>data/klines.parquet</code> 中。</p>
+
+<div class="flow">
+  <span class="step">加载数据</span>
+  <span class="arrow">→</span>
+  <span class="step">用户选择行业/持仓</span>
+  <span class="arrow">→</span>
+  <span class="step">三策略并行计算</span>
+  <span class="arrow">→</span>
+  <span class="step">取交集 → 精选</span>
+  <span class="arrow">→</span>
+  <span class="step">7 条件过滤</span>
+  <span class="arrow">→</span>
+  <span class="step">输出结果</span>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="data-loading">2. 数据加载与预处理</h2>
+
+<div class="card">
+  <h3 style="margin-top:0;">2.1 股票列表加载</h3>
+  <p>从 <code>data/stock_list.csv</code> 读取全市场股票基本信息：</p>
+  <ul>
+    <li>代码 (<code>code</code>) — 统一补齐为 6 位字符串 (<code>.str.zfill(6)</code>)</li>
+    <li>行业 (<code>industry</code>) — 空值填充为 <code>"未分类"</code>，过滤掉 <code>NaN</code>、空字符串、字面量 <code>"nan"</code></li>
+    <li>名称 (<code>name</code>) — 股票名称，用于展示和 ST 判断</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">2.2 K 线数据加载</h3>
+  <p>从 <code>data/klines.parquet</code> 读取日线行情数据，包含：</p>
+  <table>
+    <tr><th>字段</th><th>说明</th></tr>
+    <tr><td><code>code</code></td><td>股票代码（6位补齐）</td></tr>
+    <tr><td><code>date</code></td><td>交易日期</td></tr>
+    <tr><td><code>open / high / low / close</code></td><td>OHLC 价格</td></tr>
+    <tr><td><code>volume</code></td><td>成交量（手）</td></tr>
+    <tr><td><code>amount</code></td><td>成交额（元）</td></tr>
+    <tr><td><code>pct_change</code></td><td>单日涨跌幅（%）</td></tr>
+    <tr><td><code>industry</code></td><td>行业分类（可选列）</td></tr>
+  </ul>
+  <p><strong>预处理：</strong></p>
+  <ul>
+    <li>删除重复列 <code>df.loc[:, ~df.columns.duplicated()]</code></li>
+    <li>代码补齐 6 位</li>
+    <li>行业空值处理</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="trend">3. 趋势策略 <span class="tag trend">趋势</span></h2>
+
+<div class="card success">
+  <h3 style="margin-top:0;">核心思想</h3>
+  <p>基于 <strong>双均线系统</strong> 判断中期上升趋势，要求短期价格在中期均线上方，且中期在长期均线上方（多头排列），同时近期价格有向上动能。</p>
+
+  <h4>前置条件</h4>
+  <p>个股必须至少有 <strong>60 个交易日</strong> 的数据，否则跳过。</p>
+
+  <h4>判断逻辑</h4>
+  <div class="formula">
+<span class="kw">let</span> last  = 最新交易日数据
+<span class="kw">let</span> prev  = 5 个交易日前的数据
+<span class="kw">let</span> ma20  = 最近 <span class="num">20</span> 日收盘价均值
+<span class="kw">let</span> ma60  = 最近 <span class="num">60</span> 日收盘价均值
+
+<span class="kw">if</span> (last.close <span class="op">&gt;</span> ma20) <span class="op">&amp;&amp;</span> (ma20 <span class="op">&gt;</span> ma60) <span class="op">&amp;&amp;</span> (last.close <span class="op">&gt;</span> prev.close):
+    → 纳入趋势信号集
+</div>
+
+  <h4>条件拆解</h4>
+  <table>
+    <tr><th>条件</th><th>含义</th></tr>
+    <tr><td><code>close &gt; MA20</code></td><td>价格站上 20 日均线（短期强势）</td></tr>
+    <tr><td><code>MA20 &gt; MA60</code></td><td>短期均线在长期均线上方（均线多头排列）</td></tr>
+    <tr><td><code>close &gt; close[-5]</code></td><td>当前价高于 5 日前（短期动量向上）</td></tr>
+  </table>
+
+  <h4>理论背景</h4>
+  <p>这是经典的 <strong>双均线交叉系统（Golden Cross）</strong> 变体。MA20 上穿 MA60 通常被视为中期看多信号（金叉），加上价格在短期均线上方并持续走高，三重确认趋势。5 日比较排除了刚发生金叉但随即回落的假突破。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="factor">4. 多因子选股 <span class="tag factor">多因子</span></h2>
+
+<div class="card success">
+  <h3 style="margin-top:0;">核心思想</h3>
+  <p>通过一个 <strong>综合评分公式</strong>，在收益（动量）和风险（波动）之间做权衡，选出性价比最高的股票。</p>
+
+  <h4>评分公式</h4>
+  <div class="formula">
+<span class="fn">score</span> = <span class="num">50</span> + (ret_20 <span class="op">×</span> <span class="num">1.5</span>) − (vol <span class="op">×</span> <span class="num">2.0</span>)
+
+<span class="kw">其中</span>:
+  ret_20 = (close_today / close_20d_ago − <span class="num">1</span>) <span class="op">×</span> <span class="num">100</span>    <span class="c">// 20 日收益率 (%)</span>
+  vol    = std(pct_change)                        <span class="c">// 日涨跌幅标准差 (波动率)</span>
+</div>
+
+  <h4>参数含义</h4>
+  <table>
+    <tr><th>参数</th><th>值</th><th>含义</th></tr>
+    <tr><td>基准分</td><td><code>50</code></td><td>中性起点，高于 50 偏多，低于 50 偏空</td></tr>
+    <tr><td>动量权重</td><td><code>1.5</code></td><td>每 1% 的 20 日收益贡献 1.5 分</td></tr>
+    <tr><td>波动惩罚</td><td><code>2.0</code></td><td>每 1 个标准差惩罚 2 分</td></tr>
+  </table>
+
+  <h4>示例计算</h4>
+  <div class="formula">
+<span class="c">// 某股 20 日涨 10%，波动率 2%</span>
+score = <span class="num">50</span> + <span class="num">10</span><span class="op">×</span><span class="num">1.5</span> − <span class="num">2</span><span class="op">×</span><span class="num">2.0</span>
+      = <span class="num">50</span> + <span class="num">15</span> − <span class="num">4</span>
+      = <span class="num">61</span>  ← 较强
+
+<span class="c">// 某股 20 日涨 5%，波动率 8%（高波动）</span>
+score = <span class="num">50</span> + <span class="num">5</span><span class="op">×</span><span class="num">1.5</span> − <span class="num">8</span><span class="op">×</span><span class="num">2.0</span>
+      = <span class="num">50</span> + <span class="num">7.5</span> − <span class="num">16</span>
+      = <span class="num">41.5</span>  ← 偏弱（波动侵蚀了收益）
+</div>
+
+  <h4>选股逻辑</h4>
+  <p>对所有个股计算评分后，按得分 <strong>降序排列</strong>，取前 <code>top_n</code> 只（默认 20，用户可调 5–50）纳入多因子信号集。</p>
+
+  <h4>理论背景</h4>
+  <p>借鉴了 <strong>夏普比率 (Sharpe Ratio)</strong> 的思想——用波动率惩罚高风险的收益。不同的是，这里使用了简单的线性加权，而非除法形式。参数 <code>1.5</code> 和 <code>2.0</code> 体现了"波动厌恶"倾向——波动惩罚权重 (2.0) 大于收益奖励权重 (1.5)。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="rotation">5. 行业轮动 <span class="tag rotate">行业轮动</span></h2>
+
+<div class="card success">
+  <h3 style="margin-top:0;">核心思想</h3>
+  <p>在每个行业中选出 <strong>动量最强的股票</strong>，实现"选对行业，选对龙头"的效果。这是一种自上而下的选择方式——先锚定行业，再挑龙头。</p>
+
+  <h4>算法</h4>
+  <div class="formula">
+<span class="kw">for each</span> 行业 <span class="kw">in</span> 所有行业:
+    candidates = []  <span class="c">// 该行业内所有个股的 (code, ret_20)</span>
+
+    <span class="kw">for each</span> 个股 <span class="kw">in</span> 行业:
+        ret_20 = (close_today / close_20d_ago − <span class="num">1</span>) <span class="op">×</span> <span class="num">100</span>
+        candidates.append((code, ret_20))
+
+    best = max(candidates, key=ret_20)   <span class="c">// 取收益率最高的</span>
+    <span class="kw">if</span> best.ret_20 <span class="op">&gt;</span> <span class="num">0</span>:                  <span class="c">// 只有正收益才纳入</span>
+        rotation_set.add(best.code)
+</div>
+
+  <h4>关键设计</h4>
+  <ul>
+    <li><strong>行业内择优：</strong>每个行业只选 1 只表现最好的股票</li>
+    <li><strong>正收益过滤：</strong><code>ret_20 &gt; 0</code> 确保只选有正动量的行业龙头</li>
+    <li><strong>覆盖广度：</strong>只要行业有正收益即可，不限行业数量</li>
+    <li><strong>排除无效行业：</strong>行业值为 <code>"nan"</code> 或空字符串的跳过</li>
+  </ul>
+
+  <h4>理论背景</h4>
+  <p>基于 <strong>行业轮动 (Sector Rotation)</strong> 理论——不同行业在经济周期不同阶段表现各异，买入每个行业中动量最强的个股可以同时享受行业 β 和个股 α。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="intersection">6. 三策略精选（交集）<span class="tag trend">趋势</span><span class="tag factor">多因子</span><span class="tag rotate">轮动</span></h2>
+
+<div class="card warn">
+  <h3 style="margin-top:0;">核心思想</h3>
+  <p>三个策略从不同维度选股，取交集意味着股票必须 <strong>同时满足</strong> 三个独立的选股逻辑——趋势向好、性价比高、行业龙头。这构成最强信号。</p>
+
+  <div class="formula">
+all_three = trend_set <span class="op">∩</span> rotation_set <span class="op">∩</span> factor_set
+</div>
+
+  <h4>信号叠加原理</h4>
+  <table>
+    <tr><th>策略</th><th>维度</th><th>看什么</th></tr>
+    <tr><td><span class="tag trend">趋势</span></td><td>技术面</td><td>均线多头排列 + 短期动量</td></tr>
+    <tr><td><span class="tag factor">多因子</span></td><td>量化面</td><td>收益/波动综合性价比</td></tr>
+    <tr><td><span class="tag rotate">轮动</span></td><td>行业面</td><td>行业内最强 + 正动量</td></tr>
+  </table>
+
+  <p>三个维度独立、不重复，交集结果天然具有较高的胜率。但也因为条件严格，可能结果较少——这是"质优于量"的设计哲学。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="seven">7. 七条件叠加过滤 <span class="tag seven">7 条件</span></h2>
+
+<div class="card danger">
+  <h3 style="margin-top:0;">核心思想</h3>
+  <p>在 <strong>三策略精选</strong> 的基础上，叠加 7 个严格的短线技术条件，进一步验证信号的即时有效性。有 <strong>严格模式</strong> 和 <strong>宽松模式</strong> 两套参数。</p>
+
+  <h4>条件详细说明</h4>
+
+  <table>
+    <tr><th>#</th><th>条件</th><th>严格模式</th><th>宽松模式</th><th>原理</th></tr>
+    <tr>
+      <td>①</td>
+      <td><strong>非 ST 股</strong></td>
+      <td colspan="2" style="text-align:center">名称不含 <code>"ST"</code></td>
+      <td>排除高风险警示板股票</td>
+    </tr>
+    <tr>
+      <td>②</td>
+      <td><strong>10 日涨幅</strong></td>
+      <td><code>ret_10d &gt; 5%</code></td>
+      <td><code>ret_10d &gt; 0%</code></td>
+      <td>确保中期处于上升通道（非下跌反弹）</td>
+    </tr>
+    <tr>
+      <td>③</td>
+      <td><strong>量比</strong></td>
+      <td><code>vol_today / vol_5avg &gt; 1.5</code></td>
+      <td><code>vol_today / vol_5avg &gt; 1.0</code></td>
+      <td>今日放量——有资金关注</td>
+    </tr>
+    <tr>
+      <td>④</td>
+      <td><strong>今日涨幅区间</strong></td>
+      <td><code>3% ≤ pct_change ≤ 5%</code></td>
+      <td><code>0% ≤ pct_change ≤ 7%</code></td>
+      <td>温和上涨——不过热也不过冷</td>
+    </tr>
+    <tr>
+      <td>⑤</td>
+      <td><strong>收于 MA5 上方</strong></td>
+      <td colspan="2" style="text-align:center"><code>close &gt; MA5</code></td>
+      <td>收盘价高于 5 日均线——短线强势</td>
+    </tr>
+    <tr>
+      <td>⑥</td>
+      <td><strong>3 日资金流入</strong></td>
+      <td colspan="2" style="text-align:center"><code>近 3 日成交额 &gt; 前 3 日成交额</code></td>
+      <td>成交额加速——资金持续流入</td>
+    </tr>
+    <tr>
+      <td>⑦</td>
+      <td><strong>今日超额成交</strong></td>
+      <td colspan="2" style="text-align:center"><code>今日成交额 &gt; 5 日均成交额</code></td>
+      <td>今日成交额高于均线——当日资金活跃</td>
+    </tr>
+  </table>
+
+  <h4>前置条件</h4>
+  <ul>
+    <li>至少 30 个交易日数据（<code>len(sub) ≥ 30</code>）</li>
+    <li>必须有 <code>amount</code> 列（条件⑥⑦ 依赖成交额数据）</li>
+    <li>5 日均量不能为 0（避免除零）</li>
+  </ul>
+
+  <h4>10 日涨幅（条件②）计算</h4>
+  <div class="formula">
+ret_10d = (close[-<span class="num">1</span>] / close[-<span class="num">11</span>] − <span class="num">1</span>) <span class="op">×</span> <span class="num">100</span>
+
+<span class="c">// 注意：是第 1 天和第 11 天的比值，即 10 个交易日的跨度</span>
+</div>
+
+  <h4>成交量（条件③）计算</h4>
+  <div class="formula">
+volume_ratio = vol_today / mean(vol[-<span class="num">5</span>:])
+<span class="c">// 今日成交量 ÷ 近 5 日成交量均值</span>
+</div>
+
+  <h4>资金流入（条件⑥⑦）计算</h4>
+  <div class="formula">
+<span class="c">// 条件⑥：近 3 日 vs 前 3 日</span>
+amt_3d     = sum(amount[-<span class="num">3</span>:])
+amt_prev3  = sum(amount[-<span class="num">6</span>:-<span class="num">3</span>])   <span class="c">// 不足6天时用 amt_3d</span>
+check:     amt_3d − amt_prev3 <span class="op">&gt;</span> <span class="num">0</span>
+
+<span class="c">// 条件⑦：今日 vs 5 日均值</span>
+check:     amt_today − mean(amount[-<span class="num">5</span>:]) <span class="op">&gt;</span> <span class="num">0</span>
+</div>
+
+  <h4>严格 vs 宽松 对比</h4>
+  <div class="two-col">
+    <div class="card warn">
+      <h4 style="margin-top:0; color:var(--red);">🔴 严格模式</h4>
+      <ul>
+        <li>10 日涨幅 &gt; 5%（强趋势）</li>
+        <li>量比 &gt; 1.5（显著放量）</li>
+        <li>涨幅 3%–5%（精确甜区）</li>
+        <li>结果极少，信号纯度极高</li>
+      </ul>
+    </div>
+    <div class="card info">
+      <h4 style="margin-top:0; color:var(--accent2);">🟢 宽松模式</h4>
+      <ul>
+        <li>10 日涨幅 &gt; 0%（不跌即可）</li>
+        <li>量比 &gt; 1.0（不缩量即可）</li>
+        <li>涨幅 0%–7%（宽泛范围）</li>
+        <li>结果较多，适合扫描发现</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="signals-detail">8. 信号详情生成 <code>make_detail()</code></h2>
+
+<div class="card">
+  <h3 style="margin-top:0;">功能</h3>
+  <p>为任意股票代码集合生成展示用的 DataFrame，包含每只股票的详细指标，按综合分降序排列。</p>
+
+  <h4>输出字段</h4>
+  <table>
+    <tr><th>字段</th><th>含义</th><th>来源</th></tr>
+    <tr><td><code>代码</code></td><td>6 位股票代码</td><td>原始数据</td></tr>
+    <tr><td><code>名称</code></td><td>股票名称</td><td><code>name</code> 列，缺省用代码</td></tr>
+    <tr><td><code>行业</code></td><td>所属行业</td><td><code>industry</code> 列</td></tr>
+    <tr><td><code>现价</code></td><td>最新收盘价</td><td><code>close</code></td></tr>
+    <tr><td><code>今日%</code></td><td>当日涨跌幅</td><td><code>pct_change</code></td></tr>
+    <tr><td><code>20日%</code></td><td>20 日累计收益率</td><td>公式计算</td></tr>
+    <tr><td><code>波动率</code></td><td>日涨跌幅标准差</td><td><code>std(pct_change)</code></td></tr>
+    <tr><td><code>综合分</code></td><td>多因子综合评分</td><td><code>50 + ret_20×1.5 − vol×2</code></td></tr>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="portfolio">9. 持仓管理</h2>
+
+<div class="card">
+  <h3 style="margin-top:0;">数据结构</h3>
+  <p>持仓存储在 <code>my_holdings.json</code>，格式为 JSON 数组：</p>
+  <div class="formula">
+[
+  { "<span class="kw">code</span>": "<span class="num">600519</span>", "<span class="kw">name</span>": "<span class="num">贵州茅台</span>" },
+  { "<span class="kw">code</span>": "<span class="num">000858</span>", "<span class="kw">name</span>": "<span class="num">五粮液</span>" }
+]
+</div>
+
+  <h4>支持操作</h4>
+  <ul>
+    <li><strong>单个添加：</strong>输入 6 位代码，校验是否在 <code>stock_list</code> 中存在，去重后写入</li>
+    <li><strong>批量导入：</strong>多行代码，逐行处理，跳过已存在和无效的</li>
+    <li><strong>删除：</strong>点击每只股票旁边的 X 按钮</li>
+    <li><strong>持仓扫描模式：</strong>仅对持仓股运行全部分析流程</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="pipeline">10. 完整执行流水线</h2>
+
+<div class="card info">
+  <h3 style="margin-top:0;">用户点击「运行分析」后的执行流程</h3>
+
+  <div class="flow" style="flex-direction:column; align-items:flex-start; gap:1rem;">
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span class="step" style="background:var(--accent); color:#000; font-weight:700;">Step 1</span>
+      <span>确定候选股票池：按行业筛选（前 <code>n_stocks</code> 只）或 仅限持仓</span>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span class="step" style="background:var(--accent); color:#000; font-weight:700;">Step 2</span>
+      <span>从 K 线数据中提取候选股票的子集 <code>df_sub</code>，释放全量内存</span>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span class="step" style="background:var(--accent); color:#000; font-weight:700;">Step 3</span>
+      <span>调用 <code>compute_signals()</code> — 对候选池中每只股票：</span>
+    </div>
+    <div style="padding-left:3rem;">
+      <span>├─ 计算趋势条件 → <code>trend_set</code></span><br>
+      <span>├─ 计算多因子评分 → <code>factor_set</code> (Top N)</span><br>
+      <span>├─ 计算行业轮动 → <code>rotation_set</code></span><br>
+      <span>└─ 取交集 → <code>all_three</code></span>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span class="step" style="background:var(--accent); color:#000; font-weight:700;">Step 4</span>
+      <span>展示「三策略精选」表格</span>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span class="step" style="background:var(--accent); color:#000; font-weight:700;">Step 5</span>
+      <span>对精选结果应用 <code>apply_seven_conditions()</code>，展示「7 条件叠加」结果</span>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      <span class="step" style="background:var(--accent); color:#000; font-weight:700;">Step 6</span>
+      <span>根据用户勾选，分别展示趋势 / 行业轮动 / 多因子的单独结果</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>附录 A：参数配置一览</h2>
+
+<div class="param-grid">
+  <div class="param-item">
+    <div class="name">top_n</div>
+    <div class="val">5 – 50（默认 20）</div>
+    <div class="desc">多因子选股的 Top N 数量</div>
+  </div>
+  <div class="param-item">
+    <div class="name">n_stocks</div>
+    <div class="val">10 – 1000（默认 200）</div>
+    <div class="desc">行业扫描的最大股票数量</div>
+  </div>
+  <div class="param-item">
+    <div class="name">only_all_three</div>
+    <div class="val">true / false（默认 false）</div>
+    <div class="desc">是否只显示三策略精选，隐藏单独策略</div>
+  </div>
+  <div class="param-item">
+    <div class="name">seven_strict</div>
+    <div class="val">true / false（默认 false）</div>
+    <div class="desc">7 条件使用严格模式还是宽松模式</div>
+  </div>
+  <div class="param-item">
+    <div class="name">use_trend</div>
+    <div class="val">true / false（默认 true）</div>
+    <div class="desc">是否展示趋势策略结果</div>
+  </div>
+  <div class="param-item">
+    <div class="name">use_rotation</div>
+    <div class="val">true / false（默认 true）</div>
+    <div class="desc">是否展示行业轮动结果</div>
+  </div>
+  <div class="param-item">
+    <div class="name">use_factors</div>
+    <div class="val">true / false（默认 true）</div>
+    <div class="desc">是否展示多因子结果</div>
+  </div>
+  <div class="param-item">
+    <div class="name">scan_mode</div>
+    <div class="val">"行业筛选" | "我的持仓"</div>
+    <div class="desc">扫描全市场行业还是仅限持仓股</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2>附录 B：算法复杂度</h2>
+
+<div class="card">
+  <table>
+    <tr><th>算法模块</th><th>时间复杂度</th><th>说明</th></tr>
+    <tr><td>趋势策略</td><td>O(N × D)</td><td>每只股票遍历其全部日线数据</td></tr>
+    <tr><td>多因子选股</td><td>O(N × D + N log N)</td><td>计算评分 + 排序取 Top N</td></tr>
+    <tr><td>行业轮动</td><td>O(N × D)</td><td>按行业分组取最大值</td></tr>
+    <tr><td>三策略交集</td><td>O(N)</td><td>集合交运算</td></tr>
+    <tr><td>7 条件过滤</td><td>O(M × D)</td><td>仅对精选结果 M 只逐条件校验</td></tr>
+  </table>
+  <p style="margin-top:0.5rem; color:var(--text-muted);"><em>N = 候选股票数, D = 每只股票的历史天数, M = 三策略精选数 (M ≪ N)</em></p>
+</div>
+
+<!-- ============================================================ -->
+<h2>附录 C：关键数据阈值参考</h2>
+
+<div class="card">
+  <table>
+    <tr><th>阈值</th><th>值</th><th>使用位置</th></tr>
+    <tr><td>趋势数据最小天数</td><td>60 日</td><td>趋势策略前置条件</td></tr>
+    <tr><td>7 条件数据最小天数</td><td>30 日</td><td>apply_seven_conditions 前置</td></tr>
+    <tr><td>MA20 窗口</td><td>20 日</td><td>趋势策略均线</td></tr>
+    <tr><td>MA60 窗口</td><td>60 日</td><td>趋势策略均线</td></tr>
+    <tr><td>MA5 窗口</td><td>5 日</td><td>7 条件⑤ 收盘比较</td></tr>
+    <tr><td>动量回顾窗口</td><td>20 日</td><td>多因子 ret_20、行业轮动</td></tr>
+    <tr><td>短期变动窗口</td><td>5 日</td><td>趋势策略 close vs close[-5]</td></tr>
+    <tr><td>量比窗口</td><td>5 日</td><td>7 条件③⑺ 成交量/额均值</td></tr>
+    <tr><td>资金流窗口</td><td>3+3 日</td><td>7 条件⑥ 近3日 vs 前3日</td></tr>
+    <tr><td>多因子基准分</td><td>50</td><td>评分公式截距</td></tr>
+    <tr><td>动量系数</td><td>1.5</td><td>评分公式 ret_20 权重</td></tr>
+    <tr><td>波动惩罚系数</td><td>2.0</td><td>评分公式 vol 权重</td></tr>
+  </table>
+</div>
+
+<hr style="border-color:var(--border); margin:2.5rem 0 1rem;">
+<p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">
+  Vibe 量化 v2.0 算法文档 · 自动生成于 2026-06-11 · 对应 <code>docs/app.py</code>
+</p>
+
+</body>
+</html>

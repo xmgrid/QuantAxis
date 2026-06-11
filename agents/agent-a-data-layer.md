@@ -78,14 +78,38 @@ CREATE TABLE index_daily (
   PRIMARY KEY (ts_code, trade_date)
 );
 
--- 策略存储
+-- 策略存储（Vibe 2.0 更新：支持完整参数配置 + 版本管理 + 种子策略溯源）
 CREATE TABLE strategies (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
-  category TEXT NOT NULL DEFAULT 'custom',
-  conditions_json TEXT NOT NULL,
-  created_at TEXT, updated_at TEXT
+  description TEXT DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'custom',     -- 'seed' | 'technical' | 'fundamental' | 'custom'
+  is_seed INTEGER DEFAULT 0,                   -- 1=系统内置(只读), 0=用户创建(可编辑)
+  source_strategy_id INTEGER,                  -- 克隆来源策略ID, NULL=原创
+  config_json TEXT NOT NULL,                   -- 完整策略配置JSON (含trend/rotation/factor/filter/global五组参数)
+  schema_version INTEGER DEFAULT 2,            -- JSON配置格式版本号
+  app_version TEXT DEFAULT '2.0',              -- 创建/更新时的App版本
+  sort_order INTEGER DEFAULT 0,                -- 排序权重（种子策略排前面）
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (source_strategy_id) REFERENCES strategies(id)
 );
+
+-- Vibe 2.0 分析结果缓存（三策略交集 + 七条件过滤）
+CREATE TABLE vibe_results (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_date TEXT NOT NULL,                       -- 运行日期 '20260610'
+  ts_code TEXT NOT NULL,
+  strategy_type TEXT NOT NULL,                  -- 'trend'/'rotation'/'factor'/'intersection'/'seven_filter'
+  match_score REAL,                             -- 综合得分
+  ret_20 REAL,                                  -- 20日收益率
+  volatility REAL,                              -- 波动率
+  conditions_passed TEXT,                       -- 通过的条件列表 JSON array
+  seven_mode TEXT,                              -- 'strict'/'loose' (仅seven_filter类型)
+  created_at TEXT NOT NULL,
+  UNIQUE(run_date, ts_code, strategy_type, seven_mode)
+);
+CREATE INDEX idx_vibe_date_type ON vibe_results(run_date, strategy_type);
 
 -- 扫描结果缓存
 CREATE TABLE scan_results (
@@ -159,8 +183,24 @@ class StrategyDao {
   Future<void> update(Strategy s);
   Future<void> delete(int id);
   Future<List<Strategy>> getAll({String? category});
+  Future<Strategy?> getById(int id);
+
+  // Vibe 2.0 新增
+  Future<List<Strategy>> getSeedStrategies();                   // 获取所有种子策略
+  Future<List<Strategy>> getCustomStrategies();                 // 获取用户自定义策略
+  Future<List<Strategy>> getBySource(int sourceStrategyId);     // 查找克隆自某策略的所有副本
+  Future<Strategy> cloneStrategy(int sourceId, String newName); // 克隆种子→自定义
+  Future<void> resetToDefaults(int strategyId);                 // 恢复出厂默认参数
   Future<void> saveScanResults(int strategyId, List<ScanResult> results);
   Future<List<ScanResult>> getScanResults(int strategyId, DateTime date);
+}
+
+// Vibe 2.0 新增 DAO
+class VibeResultDao {
+  Future<void> saveResults(String runDate, String strategyType, List<VibeResult> results);
+  Future<List<VibeResult>> getByDate(String runDate, {String? strategyType, String? sevenMode});
+  Future<VibeResult?> getByCode(String runDate, String tsCode, String strategyType);
+  Future<void> cleanOldResults(int keepDays);  // 清理N天前的旧结果
 }
 ```
 
@@ -306,7 +346,109 @@ class SyncResult {
 
 ---
 
-### A6. 行业种子预设
+### A7. Vibe 2.0 种子策略数据初始化
+
+**文件**：`lib/datasource/vibe_seeds.dart`
+
+首次启动时，向 `strategies` 表插入三个 Vibe 2.0 种子策略：
+
+```dart
+class VibeSeedInitializer {
+  static Future<void> initialize(StrategyDao dao) async {
+    // 仅在首次启动时执行（检查是否已有种子策略）
+    final existing = await dao.getSeedStrategies();
+    if (existing.isNotEmpty) return;
+
+    // 1. 趋势策略
+    await dao.insert(Strategy(
+      name: 'Vibe 2.0 趋势策略',
+      description: '双均线多头排列三重确认 — close>MA20 且 MA20>MA60 且 close>close[5日前]',
+      category: 'seed',
+      isSeed: true,
+      configJson: jsonEncode({
+        'schema_version': 2,
+        'name': 'Vibe 2.0 趋势策略',
+        'category': 'seed',
+        'is_seed': true,
+        'trend': {
+          'min_data_days': 60, 'ma_fast': 20, 'ma_slow': 60,
+          'short_lookback': 5,
+          'require_close_above_ma': true,
+          'require_ma_cross': true,
+          'require_short_momentum': true,
+        },
+        'rotation': null,  // 此策略不使用轮动
+        'factor': null,    // 此策略不使用因子评分
+        'filter': null,    // 此策略不使用七条件
+        'global': {'industry_filter': '全部', 'max_stocks': 200},
+      }),
+      schemaVersion: 2,
+      sortOrder: 1,
+    ));
+
+    // 2. 行业轮动策略
+    await dao.insert(Strategy(
+      name: 'Vibe 2.0 行业轮动策略',
+      description: '每行业选取20日收益率最高龙头，仅纳入ret_20>0的正收益标的',
+      category: 'seed',
+      isSeed: true,
+      configJson: jsonEncode({
+        'schema_version': 2,
+        'rotation': {
+          'momentum_period': 20, 'min_return': 0.0, 'max_per_industry': 1,
+        },
+        'global': {'industry_filter': '全部', 'max_stocks': 200},
+      }),
+      schemaVersion: 2,
+      sortOrder: 2,
+    ));
+
+    // 3. 多因子评分策略
+    await dao.insert(Strategy(
+      name: 'Vibe 2.0 多因子评分策略',
+      description: 'Score = 50 + ret_20×1.5 − vol×2.0，取Top 20',
+      category: 'seed',
+      isSeed: true,
+      configJson: jsonEncode({
+        'schema_version': 2,
+        'factor': {
+          'momentum_period': 20, 'base_score': 50,
+          'momentum_weight': 1.5, 'volatility_penalty': 2.0,
+          'top_n': 20, 'min_data_days': 60,
+        },
+        'global': {'industry_filter': '全部', 'max_stocks': 200},
+      }),
+      schemaVersion: 2,
+      sortOrder: 3,
+    ));
+
+    // 4. Vibe 2.0 完整管线（三策略交集+七条件）
+    await dao.insert(Strategy(
+      name: 'Vibe 2.0 完整分析管线',
+      description: '趋势∩轮动∩因子 → 精选 → 七条件过滤（支持严格/宽松双模式）',
+      category: 'seed',
+      isSeed: true,
+      configJson: jsonEncode({
+        'schema_version': 2,
+        'trend': {'min_data_days': 60, 'ma_fast': 20, 'ma_slow': 60, 'short_lookback': 5, 'require_close_above_ma': true, 'require_ma_cross': true, 'require_short_momentum': true},
+        'rotation': {'momentum_period': 20, 'min_return': 0.0, 'max_per_industry': 1},
+        'factor': {'momentum_period': 20, 'base_score': 50, 'momentum_weight': 1.5, 'volatility_penalty': 2.0, 'top_n': 20, 'min_data_days': 60},
+        'filter': {'min_data_days': 30, 'require_amount_data': true, 'c1_exclude_st': true, 'c2_ret_period': 10, 'c2_strict_min': 5.0, 'c2_loose_min': 0.0, 'c3_vol_period': 5, 'c3_strict_min': 1.5, 'c3_loose_min': 1.0, 'c4_strict_low': 3.0, 'c4_strict_high': 5.0, 'c4_loose_low': 0.0, 'c4_loose_high': 7.0, 'c5_ma_period': 5, 'c6_recent_days': 3, 'c6_prior_days': 3, 'c7_amt_period': 5},
+        'global': {'industry_filter': '全部', 'max_stocks': 200, 'only_all_three': false, 'strict_mode': false, 'scan_mode': '行业'},
+      }),
+      schemaVersion: 2,
+      sortOrder: 0,  // 排最前面
+    ));
+  }
+}
+```
+
+**验收**：
+- [ ] 首次启动后 strategies 表包含 4 条种子策略
+- [ ] `is_seed=1` 标记正确
+- [ ] `config_json` 包含全部五组参数（trend/rotation/factor/filter/global）
+- [ ] 完整管线策略的 sortOrder=0 排最前
+- [ ] `cloneStrategy()` 能正确创建用户副本（source_strategy_id 追溯来源）
 
 **文件**：`lib/datasource/industry_seeds.dart`
 
